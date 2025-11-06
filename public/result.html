@@ -54,7 +54,7 @@
     }
 
     input,
-    button {
+    button,select {
       padding: 12px;
       font-size: 16px;
       margin: 10px auto;
@@ -351,15 +351,24 @@ footer {
   <div class="section" id="result">
     <h2>Check Your Result</h2>
     <form id="resultForm">
+       <select id="terminal" required>
+    <option value="">Select Term</option>
+    <option value="1st">1st Term</option>
+    <option value="2nd">2nd Term</option>
+    <option value="3rd">3rd Term</option>
+    <option value="annual">Annual</option>
+  </select>
       <input type="text" id="class" placeholder="Enter Class" required />
       <input type="text" id="roll" placeholder="Enter Roll No" required />
       <button type="submit">Get Result</button>
     </form>
-    <p style="font-size: 0.9em; color: #888; margin-top: 60px;text-align: left;">
+    <p style="font-size: 0.9rem; color: #888; margin-top: 60px;text-align: left;">
   🔍 <strong>नोट:</strong> कृपया कक्षा (Class Name) दर्ज करते समय निम्नलिखित संक्षिप्त रूप (शॉर्ट फॉर्म) का उपयोग करें:<br />
-  👉 <strong>NURSERY-A</strong> के लिए <strong>NURA</strong>, <br>👉<strong>NURSERY-B</strong> के लिए <strong>NURB</strong>,<br>👉<strong>NURSERY-C</strong> के लिए <strong>NURC</strong><br />
-  👉 <strong>LKG-A</strong> के लिए <strong>LKGA</strong>, <br>👉<strong>LKG-B</strong> के लिए <strong>LKGB</strong><br />
-  👉 <strong>UKG-A</strong> के लिए <strong>UKGA</strong>, <br>👉<strong>UKG-B</strong> के लिए <strong>UKGB</strong>
+  👉 <strong>NURSERY-A</strong> के लिए <strong>NURA</strong>, 
+  👉<strong>NURSERY-B</strong> के लिए <strong>NURB</strong>,
+  👉<strong>NURSERY-C</strong> के लिए <strong>NURC</strong><br />
+  👉 <strong>LKG-A</strong> के लिए <strong>LKGA</strong>, 👉<strong>LKG-B</strong> के लिए <strong>LKGB</strong><br />
+  👉 <strong>UKG-A</strong> के लिए <strong>UKGA</strong>,👉<strong>UKG-B</strong> के लिए <strong>UKGB</strong>
 </p>
 
 
@@ -383,174 +392,166 @@ footer {
   <!-- ---------------------------------------------------------- -->
   <!-- Fetch Result & Render -->
   <!-- ---------------------------------------------------------- -->
-  <script>
-    document.getElementById("resultForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const studentClass = document.getElementById("class").value.trim();
-      const roll = document.getElementById("roll").value.trim();
+<script>
+  document.getElementById("resultForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const studentClass = document.getElementById("class").value.trim();
+    const roll = document.getElementById("roll").value.trim();
+    const terminal = document.getElementById("terminal").value;
 
-      if (!studentClass || !roll) return;
+    if (!studentClass || !roll || !terminal) return;
 
-      try {
-        const res = await fetch(`/result?class=${encodeURIComponent(studentClass)}&roll=${encodeURIComponent(roll)}`);
-        const data = await res.json();
+    try {
+      const res = await fetch(`/result?class=${encodeURIComponent(studentClass)}&roll=${encodeURIComponent(roll)}&terminal=${encodeURIComponent(terminal)}`);
+      const data = await res.json();
+      const display = document.getElementById("resultDisplay");
 
-        const display = document.getElementById("resultDisplay");
-
-        if (data.error) {
-          display.innerHTML = `<p style="color: red;">${data.error}</p>`;
-          document.getElementById("downloadBtn").style.display = "none";
-          return;
-        }
-
-        // Aggregate term totals
-        const firstTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.obtainedMarks) || 0), 0);
-        const secondTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.secondTerm) || 0), 0);
-        const thirdTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.thirdTerm) || 0), 0);
-        const annualTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.AnnTerm) || 0), 0);
-
-        display.innerHTML = `
-          <div class="result-card" id="resultCard">
-            
-            <div class="school-header">
-              <img src="logo.jpeg" alt="School Logo" />
-              <div class="school-info">
-                <h2>${data.schoolName}</h2>
-                <p>${data.schoolAddress}</p>
-                <h3>First Terminal Examination Result - ${new Date().getFullYear()}</h3>
-              </div>
-            </div>
-            <hr />
-
-            <table class="details-table">
-              <tr>
-                <td>Name of Student:</td>
-                <td>${data.studentName}</td>
-              </tr>
-              <tr>
-                <td>Father's Name:</td>
-                <td>${data.fatherName}</td>
-              </tr>
-              <tr>
-                <td>Class:</td>
-                <td>${data.class}</td>
-              </tr>
-              <tr>
-                <td>Roll Number:</td>
-                <td>${data.roll}</td>
-              </tr>
-            </table>
-
-            <table class="marks-table">
-              <thead>
-                <tr>
-                  <th>Subject Details</th>
-                  <th>Full Marks</th>
-                  <th>Pass Marks</th>
-                  <th>First Term<br />Marks</th>
-                  <th>Second Term<br />Marks</th>
-                  <th>Third Term<br />Marks</th>
-                  <th>Annual Term<br />Marks</th>
-                </tr>
-              </thead>
-              <tbody>
-             ${data.marks
-  .filter((m) => m.subject.toLowerCase() !== "urdu")
-  .map(
-    (m) => `
-      <tr>
-        <td>${m.subject.toLowerCase() === "sanskrit" ? "Sansk./Urdu" : m.subject}</td>
-        <td>${m.fullMarks}</td>
-        <td>${Math.floor(m.fullMarks * 0.3)}</td>
-        <td>${m.obtainedMarks || ""}</td>
-        <td>${m.secondTerm || ""}</td>
-        <td>${m.thirdTerm || ""}</td>
-        <td>${m.AnnTerm || ""}</td>
-      </tr>`
-  ).join("")}
-
-                <tr class="total-row">
-                  <td>Total</td>
-                  <td>${data.marks.reduce((sum, m) => sum + m.fullMarks, 0)}</td>
-                  <td>${data.marks.reduce((sum, m) => sum + Math.floor(m.fullMarks * 0.3), 0)}</td>
-                  <td>${firstTermTotal}</td>
-                  <td>${secondTermTotal}</td>
-                  <td>${thirdTermTotal}</td>
-                  <td>${annualTermTotal}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <table class="marks-table">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>First Term</th>
-                  <th>Second Term</th>
-                  <th>Third Term</th>
-                  <th>Annual Term</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><strong>Total Marks</strong></td>
-                  <td>${data.totalFullMarks || ""}</td>
-                  <td></td>
-                  <td></td>
-                  <td>${data.annualTotal || ""}</td>
-                </tr>
-                <tr>
-                  <td><strong>Marks Obtained</strong></td>
-                  <td>${data.totalObtained || data.total || ""}</td>
-                  <td></td>
-                  <td></td>
-                  <td>${data.annualObtained || ""}</td>
-                </tr>
-                <tr>
-                  <td><strong>Percentage</strong></td>
-                  <td>${data.percentage || ""}</td>
-                  <td></td>
-                  <td></td>
-                  <td>${data.annualPercentage || ""}</td>
-                </tr>
-                <tr>
-                  <td><strong>Division</strong></td>
-                  <td style="color: ${
-  data.percentage < 30 ? "red" :
-  data.percentage >= 60 ? "green" :
-  "#d99200"  // moderate (orange-like)
-}; font-weight: bold;">
-  ${data.division || ""}
-</td>
-
-                  <td></td>
-                  <td></td>
-                  <td>${data.annualDivision || ""}</td>
-                </tr>
-                <tr>
-                  <td><strong>Remarks</strong></td>
-                  <td>${data.description || ""}</td>
-                  <td></td>
-                  <td></td>
-                  <td>${data.annualRemarks || ""}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div class="sign-stamp-wrapper">
-              <img src="stamp.jpeg" class="stamp" alt="School Stamp" />
-              <img src="sign.jpeg" class="sign" alt="Principal's Signature" />
-              <p class="sign-text">Principal's Signature &amp; Stamp</p>
-            </div>
-          </div>`;
-
-        document.getElementById("downloadBtn").style.display = "block";
-      } catch (err) {
-        console.error(err);
-        alert("Something went wrong. Please try again later.");
+      if (data.error) {
+        display.innerHTML = `<p style="color: red;">${data.error}</p>`;
+        document.getElementById("downloadBtn").style.display = "none";
+        return;
       }
-    });
-  </script>
+
+      // Dynamic title
+      const termTitle =
+        terminal === "1st" ? "First Terminal" :
+        terminal === "2nd" ? "Second Terminal" :
+        terminal === "3rd" ? "Third Terminal" :
+        "Annual Examination";
+
+      // Total per term
+      const firstTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.firstTerm) || 0), 0);
+      const secondTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.secondTerm) || 0), 0);
+      const thirdTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.thirdTerm) || 0), 0);
+      const annualTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.AnnTerm) || 0), 0);
+
+      // Column visibility
+      const showFirst = ["1st", "2nd", "3rd", "annual"].includes(terminal);
+      const showSecond = ["2nd", "3rd", "annual"].includes(terminal);
+      const showThird = ["3rd", "annual"].includes(terminal);
+      const showAnnual = ["annual"].includes(terminal);
+
+      display.innerHTML = `
+        <div class="result-card" id="resultCard">
+          <div class="school-header">
+            <img src="logo.jpeg" alt="School Logo" />
+            <div class="school-info">
+              <h2>${data.schoolName}</h2>
+              <p>${data.schoolAddress}</p>
+              <h3>${termTitle} Examination Result - ${new Date().getFullYear()}</h3>
+            </div>
+          </div>
+          <hr />
+
+          <table class="details-table">
+            <tr><td>Name of Student:</td><td>${data.studentName}</td></tr>
+            <tr><td>Father's Name:</td><td>${data.fatherName}</td></tr>
+            <tr><td>Class:</td><td>${data.class}</td></tr>
+            <tr><td>Roll Number:</td><td>${data.roll}</td></tr>
+          </table>
+
+          <table class="marks-table">
+            <thead>
+              <tr>
+                <th>Subject Details</th>
+                <th>Full Marks</th>
+                <th>Pass Marks</th>
+                <th>First Term<br>Marks</th>
+                <th>Second Term<br>Marks</th>
+                <th>Third Term<br>Marks</th>
+                <th>Annual Term<br>Marks</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.marks.map(m => `
+                <tr>
+                  <td>${m.subject.toLowerCase() === "sanskrit" ? "Sansk./Urdu" : m.subject}</td>
+                  <td>${m.fullMarks}</td>
+                  <td>${m.passMarks}</td>
+                  <td>${showFirst ? (m.firstTerm || "") : ""}</td>
+                  <td>${showSecond ? (m.secondTerm || "") : ""}</td>
+                  <td>${showThird ? (m.thirdTerm || "") : ""}</td>
+                  <td>${showAnnual ? (m.AnnTerm || "") : ""}</td>
+                </tr>`).join("")}
+
+              <tr class="total-row">
+                <td>Total</td>
+                <td>${data.totalFullMarks}</td>
+                <td>${data.marks.reduce((sum, m) => sum + m.passMarks, 0)}</td>
+                <td>${showFirst ? firstTermTotal : ""}</td>
+                <td>${showSecond ? secondTermTotal : ""}</td>
+                <td>${showThird ? thirdTermTotal : ""}</td>
+                <td>${showAnnual ? annualTermTotal : ""}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table class="marks-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>First Term</th>
+                <th>Second Term</th>
+                <th>Third Term</th>
+                <th>Annual Term</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Total Marks</strong></td>
+                <td>${showFirst ? data.totalFullMarks : ""}</td>
+                <td>${showSecond ? data.totalFullMarks : ""}</td>
+                <td>${showThird ? data.totalFullMarks : ""}</td>
+                <td>${showAnnual ? data.totalFullMarks : ""}</td>
+              </tr>
+              <tr>
+                <td><strong>Marks Obtained</strong></td>
+                <td>${showFirst ? firstTermTotal : ""}</td>
+                <td>${showSecond ? secondTermTotal : ""}</td>
+                <td>${showThird ? thirdTermTotal : ""}</td>
+                <td>${showAnnual ? annualTermTotal : ""}</td>
+              </tr>
+             <tr>
+  <td><strong>Percentage</strong></td>
+  <td>${showFirst ? data.percentageFirst || "" : ""}</td>
+  <td>${showSecond ? data.percentageSecond || "" : ""}</td>
+  <td>${showThird ? data.percentageThird || "" : ""}</td>
+  <td>${showAnnual ? data.percentageAnnual || "" : ""}</td>
+
+</tr>
+
+              <tr>
+                <td><strong>Division</strong></td>
+                <td>${showFirst ? data.division : ""}</td>
+                <td>${showSecond ? data.division : ""}</td>
+                <td>${showThird ? data.division : ""}</td>
+                <td>${showAnnual ? data.division : ""}</td>
+              </tr>
+              <tr>
+                <td><strong>Remarks</strong></td>
+                <td>${showFirst ? data.description : ""}</td>
+                <td>${showSecond ? data.description : ""}</td>
+                <td>${showThird ? data.description : ""}</td>
+                <td>${showAnnual ? data.description : ""}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="sign-stamp-wrapper">
+            <img src="stamp.jpeg" class="stamp" alt="School Stamp" />
+            <img src="sign.jpeg" class="sign" alt="Principal's Signature" />
+            <p class="sign-text">Principal's Signature & Stamp</p>
+          </div>
+        </div>`;
+
+      document.getElementById("downloadBtn").style.display = "block";
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Please try again later.");
+    }
+  });
+</script>
+
 
   <!-- ---------------------------------------------------------- -->
   <!-- PDF Generation (Fixed for Mobile) -->
@@ -598,42 +599,6 @@ footer {
   }
 </script>
 
-  <!-- ---------------------------------------------------------- -->
-  <!-- Branded Popup (unchanged) -->
-  <!-- ---------------------------------------------------------- -->
-  <script>
-    (function () {
-      const popup = document.createElement("div");
-      popup.innerHTML = "Generated by <strong>GenZai.in</strong>";
-      Object.assign(popup.style, {
-        position: "fixed",
-        bottom: "20px",
-        left: "20px",
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        color: "#fff",
-        padding: "8px 12px",
-        borderRadius: "8px",
-        fontSize: "14px",
-        zIndex: "1000",
-        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-        opacity: "0",
-        transform: "translateY(10px)",
-        transition: "opacity 0.5s ease, transform 0.5s ease",
-      });
 
-      document.body.appendChild(popup);
-
-      requestAnimationFrame(() => {
-        popup.style.opacity = "1";
-        popup.style.transform = "translateY(0)";
-      });
-
-      setTimeout(() => {
-        popup.style.opacity = "0";
-        popup.style.transform = "translateY(10px)";
-        setTimeout(() => popup.remove(), 500);
-      }, 5000);
-    })();
-  </script>
 </body>
 </html>
