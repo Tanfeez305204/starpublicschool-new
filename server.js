@@ -107,7 +107,7 @@ app.get('/result', (req, res) => {
     const getVal = (termData) => {
       if (!termData) return "AB";
       const val = termData[sub];
-      if (val === undefined || val === null || String(val).trim() === "")
+      if (val === undefined || val === null || val==="AB" || String(val).trim() === "")
         return "AB";
       const v = String(val).trim();
       if (["-", "_"].includes(v)) return "NA";
@@ -233,8 +233,28 @@ app.get('/result', (req, res) => {
 
 // Read Excel sheet for provisional certificate
 app.get('/provisional', (req, res) => {
-  const queryClass = req.query.class?.trim().toUpperCase();
-  const roll = req.query.roll?.trim();
+ let queryClass = (req.query.class || "").trim().toUpperCase();
+const roll = (req.query.roll || "").trim();
+
+// ✅ Short form mapping
+const classMap = {
+  NURA: "NURSERY-A",
+  NURB: "NURSERY-B",
+  NURC: "NURSERY-C",
+  LKGA: "L.K.G-A",
+  LKGB: "L.K.G-B",
+  UKGA: "U.K.G-A",
+  UKGB: "U.K.G-B"
+};
+
+// ✅ Apply mapping if short form entered
+if (classMap[queryClass]) {
+  queryClass = classMap[queryClass];
+}
+
+console.log("Mapped class:", queryClass); // optional (for debugging)
+
+  
 
   if (!queryClass || !roll) return res.json({ error: "Class and Roll required." });
 
