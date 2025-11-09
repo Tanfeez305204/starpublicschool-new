@@ -4,11 +4,22 @@
   <meta charset="UTF-8" />
   <title>SPS School - Student Result Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
 
   <style>
     /* --------------------
        Base Typography & Colours
     -------------------- */
+    .school-info h3 {
+  margin: 3px 0;          /* upar-niche ka gap kam kare */
+  line-height: 1.2;       /* line ke beech gap kam kare */
+  font-family: 'Cinzel Decorative', serif; /* custom font */
+  font-weight: 700;       /* bold */
+  font-size: 20px;        /* font size adjust */
+  color: #1a237e;         /* optional color */
+}
+
     body {
       font-family: "Segoe UI", sans-serif;
       background-color: #fefefe;
@@ -95,23 +106,23 @@
   left: 50%;
   transform: translate(-50%, -50%) rotate(-45deg);
   font-size: 60px;
-  color: rgba(0, 0, 0, 0.06);
-  white-space: nowrap;
+  color: rgba(0, 0, 0, 0.20); 
   pointer-events: none;
   z-index: 0;
 }
+
 
     /* --------------------
        Result Card
     -------------------- */
     .result-card {
-  background: #f9fbfd; /* soft light blue-gray */
+  background: #fbfbfb; /* soft light blue-gray */
   width: 100%;
   max-width: 794px;
   min-height: 1123px;
   padding: 30px;
-  border: 1px solid #c6d2e1; /* light border */
-  margin: 20px auto;
+  border: 3px solid #edfa38; /* light border */
+  margin: 10px auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* subtle shadow */
   box-sizing: border-box;
   position: relative;
@@ -126,7 +137,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) rotate(-45deg);
-  font-size: 100px;
+  font-size: 90px;
   font-weight: 700;
   color: rgba(0, 0, 0, 0.05); /* Subtle watermark color */
   white-space: nowrap;
@@ -151,12 +162,14 @@
     .school-header {
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
     .school-header img {
-      height: 60px;
+      height: 90px;
       width: auto;
+      margin-top: 2px;   /* now it will work */
+      align-self: flex-start;
     }
 
     .school-info {
@@ -168,12 +181,18 @@
       margin: 0;
       font-size: 24px;
       color: #2180b3;
+      margin: 5px 0;        /* upar-niche ka gap */
+      line-height: 0.5;     /* line ke beech ka gap */
     }
 
     .school-info p {
-      margin: 5px 0;
-      font-size: 14px;
-    }
+  margin: 3px 0;          /* upar-niche ka gap kam kare */
+  line-height: 1.2;       /* line ke beech gap kam kare */
+  font-family: 'Cinzel Decorative', serif; /* custom font */
+  font-weight: 700;       /* bold */
+  font-size: 16px;        /* font size adjust */
+  color: #1a237e;         /* optional color */
+}
 
     /* --------------------
        Tables
@@ -181,8 +200,9 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 15px 0;
+      margin: 5px 0;
       font-size: 13px;
+      font-weight: 600;
     }
 
     th,
@@ -203,25 +223,36 @@
     }
 
     .marks-table th {
-      font-size: 12px;
+      font-size: 14px;
       text-align: center;
+      font-weight: bold;
+
     }
 
     .marks-table td {
       text-align: center;
+      font-size: 13px;
     }
 
     .total-row {
       font-weight: bold;
       background-color: #f5f5f5;
+      font-weight: bold;
+      font-size: 16px;
+
     }
+    .marks-table td:first-child,
+.marks-table th:first-child {
+  font-weight: bold;
+}
+
 
     /* --------------------
        Signature & Stamp
     -------------------- */
     .sign-stamp-wrapper {
       position: absolute;
-      bottom: 60px;
+      bottom: 10px;
       right: 30px;
       width: 200px;
       text-align: center;
@@ -231,12 +262,12 @@
     .stamp {
       width: 120px;
       opacity: 0.5;
-      margin-bottom: -40px;
+      margin-bottom: -50px;
     }
 
     .sign {
       width: 80px;
-      margin-bottom: 5px;
+      margin-bottom: 0px;
       position: relative;
       z-index: 1;
     }
@@ -279,7 +310,10 @@ footer {
   border-top: 1px solid #ddd;
 }
 
-
+.school-address{
+  margin: 3px 0;
+  line-height: 0.5;
+}
     /* --------------------
        Mobile Styles
     -------------------- */
@@ -341,7 +375,10 @@ footer {
   <!-- Header -->
   <!-- ---------------------------------------------------------- -->
   <header>
-    <img src="logo.jpeg" alt="School Logo" />
+   <a href="index.html" target="_blank">
+  <img src="logo.jpeg" alt="School Logo" />
+</a>
+
     <p>Star Public School</p>
   </header>
 
@@ -355,8 +392,9 @@ footer {
     <option value="">Select Term</option>
     <option value="1st">1st Term</option>
     <option value="2nd">2nd Term</option>
-    <option value="3rd">3rd Term</option>
+   <!-- <option value="3rd">3rd Term</option>
     <option value="annual">Annual</option>
+    -->
   </select>
       <input type="text" id="class" placeholder="Enter Class" required />
       <input type="text" id="roll" placeholder="Enter Roll No" required />
@@ -436,8 +474,21 @@ footer {
           <div class="school-header">
             <img src="logo.jpeg" alt="School Logo" />
             <div class="school-info">
-              <h2>${data.schoolName}</h2>
-              <p>${data.schoolAddress}</p>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+<h2 style="
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1a237e;
+  letter-spacing: 1px;
+  margin: 10px 0 15px 0;
+">
+  ${data.schoolName}
+</h2>
+
+
+<p class="school-address">${data.schoolAddress}</p>
+
               <h3>${termTitle} Examination Result - ${new Date().getFullYear()}</h3>
             </div>
           </div>
@@ -477,7 +528,9 @@ footer {
               <tr class="total-row">
                 <td>Total</td>
                 <td>${data.totalFullMarks}</td>
-                <td>${data.marks.reduce((sum, m) => sum + m.passMarks, 0)}</td>
+<td><strong>${
+  data.marks.reduce((sum, m) => sum + (Number(m.passMarks) || 0), 0)
+}</strong></td>
                 <td>${showFirst ? firstTermTotal : ""}</td>
                 <td>${showSecond ? secondTermTotal : ""}</td>
                 <td>${showThird ? thirdTermTotal : ""}</td>
@@ -522,20 +575,105 @@ footer {
 
               <tr>
                 <td><strong>Division</strong></td>
-                <td>${showFirst ? data.division : ""}</td>
-                <td>${showSecond ? data.division : ""}</td>
-                <td>${showThird ? data.division : ""}</td>
-                <td>${showAnnual ? data.division : ""}</td>
+                <td>${showFirst ? data.division.first : ""}</td>
+                <td>${showSecond ? data.division.second : ""}</td>
+                <td>${showThird ? data.division.third : ""}</td>
+                <td>${showAnnual ? data.division.annual : ""}</td>
               </tr>
-              <tr>
-                <td><strong>Remarks</strong></td>
-                <td>${showFirst ? data.description : ""}</td>
-                <td>${showSecond ? data.description : ""}</td>
-                <td>${showThird ? data.description : ""}</td>
-                <td>${showAnnual ? data.description : ""}</td>
-              </tr>
+              
             </tbody>
           </table>
+          <div class="marksheet-bulletin">
+  <h3>Important Information</h3>
+  <ul>
+    <li>This is a computer-generated marksheet and does not require any signature.</li>
+    <li>The details shown here are based on official school records.</li>
+    <li>Any discrepancy should be reported to the class teacher within 7 days of result declaration.</li>
+    <li>Issued by <strong>STAR PUBLIC SCHOOL</strong>, Main Road Mathia Bazar, Meghwal.</li>
+    <li>AB: AB denotes absent in particular subject</li>
+    <li>NA: NA denotes Not Applicable for particular subject for particular class</li>
+  </ul>
+</div>
+
+<style>
+  .school-info h2 {
+  background: linear-gradient(45deg, #ff4b1f, #ff9068, #ffc371, #ffedbc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1; /* text ke upar neeche gap */
+  margin: 5px 0 0px 0; /* thoda extra space */
+  padding: 1px 0; /* optional for extra breathing room */
+}
+
+
+.school-info p {
+  background: linear-gradient(45deg, #4facfe, #00f2fe, #43e97b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.school-address {
+  background: linear-gradient(45deg, #f7971e, #ffd200, #ff6a00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.marksheet-bulletin {
+  margin-top: 10px;
+  border: 1px solid #aaa;
+  background-color: #fdfdfd;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  font-family: "Georgia", "Times New Roman", serif;
+  color: #333;
+  text-align: left; /* Force all text inside to align left */
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.marksheet-bulletin h3 {
+  text-align: center;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #222;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+..school-address h3 {
+  margin: 3px 0;          /* upar-niche ka gap kam kare */
+  line-height: 1.2;       /* line ke beech gap kam kare */
+  font-family: 'Cinzel Decorative', serif; /* custom font */
+  font-weight: 700;       /* bold */
+  font-size: 16px;        /* font size adjust */
+  color: #1a237e;         /* optional color */
+}
+
+
+.school-address {
+  font-size: 20px !important;
+  font-weight:500
+  margin: 1px 0;
+  line-height: 0.1;
+  margin-bottom:30px
+}
+
+
+.marksheet-bulletin ul {
+  list-style-type: disc;
+  margin: 0;
+  padding-left: 30px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.marksheet-bulletin li {
+  margin-bottom: 4px;
+}
+</style>
 
           <div class="sign-stamp-wrapper">
             <img src="stamp.jpeg" class="stamp" alt="School Stamp" />
@@ -556,49 +694,45 @@ footer {
   <!-- ---------------------------------------------------------- -->
   <!-- PDF Generation (Fixed for Mobile) -->
   <!-- ---------------------------------------------------------- -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+
 <script>
   async function downloadPDF() {
-    const element = document.getElementById("resultCard");
-    if (!element) return;
+  const card = document.getElementById("resultCard");
+  if (!card) return alert("Please generate the result first!");
 
-    element.classList.add("pdf-mode");
+  // High resolution canvas
+  const canvas = await html2canvas(card, { scale: 8, useCORS: true });
+  const imgData = canvas.toDataURL("image/png");
 
-    // Delay for style application
-    await new Promise((r) => setTimeout(r, 300));
+  const pageWidth = 595;  // A4 width in points
+  const pageHeight = 842; // A4 height in points
 
-    // A4 @ 300dpi = 2480x3508 pixels
-    const canvas = await html2canvas(element, {
-      scale: 3,               // HIGH resolution
-      useCORS: true,
-      backgroundColor: "#fff",
-      width: 794,             // Match .pdf-mode width
-      height: 1123            // Match .pdf-mode height
-    });
+  // Calculate height to maintain aspect ratio
+  const imgWidth = canvas.width;
+  const imgHeight = canvas.height;
+  const ratio = imgHeight / imgWidth;
+  const pdfHeight = pageWidth * ratio;
 
-    const imgData = canvas.toDataURL("image/png");
+  const pdfDoc = {
+    pageSize: 'A4',
+    pageMargins: [0, 0, 0, 0],  // no extra margins
+    content: [
+      {
+        image: imgData,
+        width: pageWidth,
+        height: pdfHeight > pageHeight ? pageHeight : pdfHeight
+      }
+    ]
+  };
 
-    const pdf = new jspdf.jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4"
-    });
+  pdfMake.createPdf(pdfDoc).download(`student_result.pdf`);
+}
 
-    const pdfWidth = 210;
-    const pdfHeight = 297;
-    const imgProps = {
-      width: pdfWidth,
-      height: (canvas.height * pdfWidth) / canvas.width
-    };
-
-    const positionY = 0;
-    pdf.addImage(imgData, 'PNG', 0, positionY, imgProps.width, imgProps.height, undefined, "FAST");
-
-    pdf.save("student_result.pdf");
-
-    element.classList.remove("pdf-mode");
-  }
 </script>
 
 
 </body>
+
 </html>

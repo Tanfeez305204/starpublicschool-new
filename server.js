@@ -1,15 +1,15 @@
+
 const express = require('express');
 const xlsx = require('xlsx');
 const path = require('path');
 const cors = require('cors');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
-
+ 
 app.use(cors());
 app.use(express.static('public')); // frontend folder
 
-// ✅ Read Excel safely
+//  Read Excel safely
 const readSheet = (sheetName) => {
   try {
     const wb = xlsx.readFile(path.join(__dirname, 'results.xlsx'));
@@ -35,23 +35,6 @@ app.get('/result', (req, res) => {
   if (!terminal)
     return res.json({ error: "Please select terminal." });
 
-  const readSheet = (sheetName) => {
-    try {
-      const wb = xlsx.readFile(path.join(__dirname, 'results.xlsx'));
-      const sheet = wb.Sheets[sheetName];
-      return sheet ? xlsx.utils.sheet_to_json(sheet) : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const safeValue = (val, fallback = "") =>
-    val === undefined || val === null || String(val).trim() === ""
-      ? fallback
-      : String(val).trim();
-
-  const isNumeric = (val) => !isNaN(parseFloat(val)) && isFinite(val);
-
   const sheets = {
     first: readSheet("result_1st") || [],
     second: readSheet("result_2nd") || [],
@@ -73,9 +56,8 @@ app.get('/result', (req, res) => {
     annual: findStudent(sheets.annual),
   };
 
-  if (!data.first && !data.second && !data.third && !data.annual) {
+  if (!data.first && !data.second && !data.third && !data.annual)
     return res.json({ error: "Student not found." });
-  }
 
   const normalize = (s) =>
     s.trim().toLowerCase().replace(/\./g, "").replace(/\s+/g, "");
@@ -95,38 +77,68 @@ app.get('/result', (req, res) => {
     return unique;
   }, []);
 
-  const marks = subjects.map((sub) => ({
-    subject: sub,
-    fullMarks: 100,
-    passMarks: 30,
-    firstTerm: ["1st", "2nd", "3rd", "annual"].includes(terminal)
-      ? data.first
-        ? safeValue(data.first[sub])
-        : ""
-      : "",
-    secondTerm: ["2nd", "3rd", "annual"].includes(terminal)
-      ? data.second
-        ? safeValue(data.second[sub])
-        : ""
-      : "",
-    thirdTerm: ["3rd", "annual"].includes(terminal)
-      ? data.third
-        ? safeValue(data.third[sub])
-        : ""
-      : "",
-    AnnTerm:
-      terminal === "annual"
-        ? data.annual
-          ? safeValue(data.annual[sub])
-          : ""
-        : "",
-  }));
+  const lowerClasses = [
+    "NURSERY-A", "NURSERY-B", "NURSERY-C",
+    "L.K.G-A", "L.K.G-B", "U.K.G-A", "U.K.G-B"
+  ];
+  const isLowerClass = lowerClasses.includes(queryClass);
 
+  // ✅ Filter Science/SST for lower class
+  const visibleSubjects = subjects.filter((sub) => {
+    const name = sub.trim().toUpperCase();
+    if (isLowerClass && (name.includes("SCIENCE") || name.includes("S.S.T")))
+      return false; // Hide
+    return true;
+  });
+
+  const marks = visibleSubjects.map((sub) => {
+    const normalizedSub = sub.trim().toUpperCase();
+    const isDrawing = normalizedSub.includes("DRAWING");
+
+    let fullMarks = 100;
+    let passMarks = 30;
+
+    // ✅ Drawing → grade only
+    if (isDrawing) {
+      fullMarks = "Grade";
+      passMarks = "-";
+    }
+
+    const getVal = (termData) => {
+      if (!termData) return "AB";
+      const val = termData[sub];
+      if (val === undefined || val === null || String(val).trim() === "")
+        return "AB";
+      const v = String(val).trim();
+      if (["-", "_"].includes(v)) return "NA";
+      return isNumeric(v) ? parseFloat(v) : v;
+    };
+
+    return {
+      subject: sub,
+      fullMarks,
+      passMarks,
+      firstTerm: ["1st", "2nd", "3rd", "annual"].includes(terminal)
+        ? getVal(data.first)
+        : 0,
+      secondTerm: ["2nd", "3rd", "annual"].includes(terminal)
+        ? getVal(data.second)
+        : 0,
+      thirdTerm: ["3rd", "annual"].includes(terminal)
+        ? getVal(data.third)
+        : 0,
+      AnnTerm: terminal === "annual" ? getVal(data.annual) : 0,
+    };
+  });
+
+  // ✅ Total Calculation — exclude Drawing
   const calcTotal = (sheetData) =>
     sheetData
       ? Object.keys(sheetData)
           .filter(
-            (k) => !["Class", "Roll", "Name", "FatherName", "Father Name"].includes(k)
+            (k) =>
+              !["Class", "Roll", "Name", "FatherName", "Father Name"].includes(k) &&
+              !k.toLowerCase().includes("drawing")
           )
           .reduce(
             (sum, k) =>
@@ -142,30 +154,49 @@ app.get('/result', (req, res) => {
     annual: calcTotal(data.annual),
   };
 
-  const termKeys = ["first", "second", "third", "annual"];
-  const totalFullMarks = subjects.length * 100;
+  // ✅ Total full marks calculation
+  const totalFullMarks = subjects.filter(sub => {
+    const name = sub.trim().toUpperCase();
+    if (name.includes("DRAWING")) return false;
+    if (isLowerClass && (name.includes("SCIENCE") || name.includes("S.S.T"))) return false;
+    return true;
+  }).length * 100;
 
-  // ✅ Calculate percentage for each term
+  // ✅ Percentage logic
+  const termKeys = ["first", "second", "third", "annual"];
   const percentages = {};
-  termKeys.forEach((k) => {
-    const termCount = termKeys.indexOf(k) + 1;
-    const shownTotals = termKeys.slice(0, termCount).map((t) => totals[t]);
-    const shownTotal = shownTotals.reduce((a, b) => a + (b || 0), 0);
-    percentages[k] = ((shownTotal / (totalFullMarks * termCount)) * 100).toFixed(2);
+  termKeys.forEach((term) => {
+    const totalObtained = totals[term] || 0;
+    const totalFull = totalFullMarks || 1;
+    percentages[term] = ((totalObtained / totalFull) * 100).toFixed(2);
   });
 
-  const termMap = { "1st": "first", "2nd": "second", "3rd": "third", annual: "annual" };
-  const selectedTerm = termMap[terminal] || "first";
-  const percentage = parseFloat(percentages[selectedTerm] || 0);
+  // ✅ Division
+  const division = {};
+  termKeys.forEach((k) => {
+    const termData = data[k];
+    const perc = parseFloat(percentages[k] || 0);
+    let hasIncomplete = false;
 
-  const division =
-    percentage >= 60
+    if (termData) {
+      Object.keys(termData).forEach((key) => {
+        if (["Class", "Roll", "Name", "FatherName", "Father Name"].includes(key))
+          return;
+        const val = String(termData[key] || "").trim().toUpperCase();
+        if (["", "AB", "NA", "-", "_"].includes(val)) hasIncomplete = true;
+      });
+    }
+
+    division[k] = hasIncomplete
+      ? "INCOMPLETE"
+      : perc >= 60
       ? "First"
-      : percentage >= 45
+      : perc >= 45
       ? "Second"
-      : percentage >= 30
+      : perc >= 30
       ? "Third"
       : "Fail";
+  });
 
   res.json({
     schoolName: "STAR PUBLIC SCHOOL",
@@ -194,11 +225,12 @@ app.get('/result', (req, res) => {
     percentageAnnual: percentages.annual,
     division,
     description:
-      division === "Fail"
+      Object.values(division).includes("Fail")
         ? "Needs Improvement."
         : "Keep up the good work!",
   });
 });
+
 // Read Excel sheet for provisional certificate
 app.get('/provisional', (req, res) => {
   const queryClass = req.query.class?.trim().toUpperCase();
@@ -213,19 +245,25 @@ app.get('/provisional', (req, res) => {
 
   if (!student) return res.json({ error: "Student not found." });
 
+  // Normalize keys
+  const normalizedStudent = {};
+  for (const key in student) {
+    const normalizedKey = key.trim().toLowerCase().replace(/\s+/g, '');
+    normalizedStudent[normalizedKey] = student[key];
+  }
+
   // Map Excel fields to certificate fields
   res.json({
-    studentName: safeValue(student.Name),
-    fatherName: safeValue(student.FatherName),
-    schoolName: safeValue(student.SchoolName || "STAR PUBLIC SCHOOL, MATHIA"),
-    class: safeValue(student.RollCode || student.Class),
-    rollNo: safeValue(student.Roll),
-    year: safeValue(student.Year || "Second Term Exam 2025"),
-    division: safeValue(student.Division),
+    studentName: safeValue(normalizedStudent["name"]),
+    fatherName: safeValue(normalizedStudent["fathername"]),
+    schoolName: safeValue(normalizedStudent["schoolname"] || "STAR PUBLIC SCHOOL, MATHIA"),
+    class: safeValue(normalizedStudent["rollcode"] || normalizedStudent["class"]),
+    rollNo: safeValue(normalizedStudent["roll"]),
+    year: safeValue(normalizedStudent["year"] || "Second Term Exam 2025"),
+    division: safeValue(normalizedStudent["division"]),
     date: new Date().toLocaleDateString('en-GB'),
-    pcNo: safeValue(student.PCNo)
+    pcNo: safeValue(normalizedStudent["pcno"])
   });
 });
-
 
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
