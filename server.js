@@ -183,7 +183,7 @@ app.get('/result', (req, res) => {
         if (["Class", "Roll", "Name", "FatherName", "Father Name"].includes(key))
           return;
         const val = String(termData[key] || "").trim().toUpperCase();
-        if (["", "AB", "NA", "-", "_"].includes(val)) hasIncomplete = true;
+        if (["", "AB", "-"].includes(val)) hasIncomplete = true;
       });
     }
 
