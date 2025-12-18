@@ -3,8 +3,74 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bihar Provisional Certificate — Final (A5 Landscape)</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>Bihar Provisional Certificate — Final (A5 Landscape)</title>
+ 
+<button id="logoutBtn" style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 9999;
+">
+  Logout
+</button>
+
+
   <style>
+   nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background: #3a9aa4;
+  display: flex;
+  align-items: center;
+  padding: 0 30px;
+  z-index: 1000;
+}
+
+/* Logo */
+nav img {
+  height: 50px;
+}
+
+/* School Name (CENTER) */
+nav h1 {
+  flex: 1;
+  text-align: center;
+  color: #fff;
+  font-size: 22px;
+  margin: 0;
+  font-weight: 700;
+}
+
+/* Menu (RIGHT) */
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+  margin: 0;
+  padding: 0;
+  margin-right: 150px;
+}
+
+/* Menu links */
+nav ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
     :root{
       --a5-w:210mm; --a5-h:148.5mm;
       --ivory:#fbf7f0;
@@ -15,6 +81,7 @@
       --text:#2b2023;
       --muted:#7b5860;
     }
+ 
     html,body{height:100%;margin:0;background:linear-gradient(180deg,#fff,#fbf7f0);font-family:Georgia, 'Times New Roman', serif;color:var(--text)}
     .wrap{display:flex;justify-content:center;padding:18px}
     .cert{
@@ -31,6 +98,63 @@
         radial-gradient(circle at 10% 20%, rgba(0,0,0,0.02), transparent 5%),
         radial-gradient(circle at 80% 80%, rgba(0,0,0,0.01), transparent 6%);
     }
+    /* Center the whole card */
+.search-card {
+  max-width: 350px;
+  width: 90%;
+  margin: 100px auto;
+  background: #f7f7f7;      /* Light gray */
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.search-title {
+  margin-bottom: 15px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Inputs */
+.input {
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 15px;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  background: #007bff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  background: #0056b3;
+}
+
+/* After-search buttons */
+.after-btns {
+  display: none;
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
     .name{
       margin-right: 90px;
     }
@@ -107,6 +231,16 @@
   </style>
 </head>
 <body>
+  <nav>
+  <a href="index.html"><img src="content/logo.jpeg"></a>
+  <h1>Star Public School</h1>
+  <ul>
+    <li><a href="index.html">HOME</a></li>
+    <li><a href="result.html">RESULT</a></li>
+    <li><a href="contact.html">CONTACT</a></li>
+  </ul>
+</nav>
+
   <div class="wrap">
     <div class="cert" id="certificate">
       <div class="cert-inner"></div>
@@ -139,7 +273,7 @@
       <div class="line-date">Patna, Dated: <span class="value" id="dateVal">31/03/2022</span></div>
       <div class="footer">
       <div class="seal">
-      <img src="sampleseal.jpg" alt="Board Seal" />
+      <img src="content/sampleseal.jpg" alt="Board Seal" />
       </div>
         <div class="sign">
           <div class="name">Ajay Kumar Giri</div>
@@ -149,14 +283,51 @@
     </div>
   </div>
 
-  <!-- controls + search inputs -->
-  <div class="controls" style="display:flex;justify-content:center;gap:10px;">
-    <input id="classInput" placeholder="Class" />
-    <input id="rollInput" placeholder="Roll" />
-    <button class="btn" id="searchBtn">Search</button>
-    <button class="btn" id="download">Download PDF</button>
-    <button class="btn" id="printBtn">Print</button>
+  <!-- Search + Buttons --> 
+  
+<div class="search-card">
+  <h2 class="search-title">Search Result</h2>
+
+  <div id="controlsBox" class="controls-box"> 
+    <input id="classInput" placeholder="Enter Class" class="input" /> 
+    <input id="rollInput" placeholder="Enter Roll Number" class="input" />
+
+    <button class="btn" id="searchBtn">Search</button> 
+
+    <!-- Buttons appear AFTER search --> 
+    <div id="afterSearchBtns" class="after-btns"> 
+      <button class="btn" id="download">Download PDF</button>
+    </div>
   </div>
+</div>
+<script>
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    try {
+      const res = await fetch("/admin/logout");
+      if (res.ok) {
+        window.location.href = "/admin.html"; // redirect to login
+      } else {
+        alert("Logout failed.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong.");
+    }
+  });
+</script>
+<script>
+  // Check session by calling a small API (optional)
+  fetch('/admin/dashboard', { method: 'GET', credentials: 'same-origin' })
+    .then(res => {
+      if (res.status === 401) {
+        // Not logged in, redirect to login
+        window.location.href = '/admin.html';
+      }
+    }).catch(() => {
+      window.location.href = '/admin.html';
+    });
+</script>
+
 
   <script>
     document.getElementById('certificate').style.display='none';
@@ -222,5 +393,6 @@
 
     document.getElementById('printBtn').addEventListener('click',()=>window.print());
   </script>
+  
 </body>
 </html>

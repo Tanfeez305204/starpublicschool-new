@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reset Admin Password</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+    }
+    .container {
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 350px;
+    }
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #28a745;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .link {
+      margin-top: 15px;
+      display: block;
+      color: #007bff;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .link:hover {
+      text-decoration: underline;
+    }
+    .section {
+      margin-bottom: 20px;
+    }
+    #reset-password-section {
+      display: none; /* hidden initially */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Reset Admin Password</h2>
+    
+    <!-- Request OTP -->
+    <div class="section" id="otp-section">
+      <form id="request-otp-form">
+        <input type="email" name="email" placeholder="Enter Email" required>
+        <button type="submit">Send OTP</button>
+      </form>
+    </div>
+
+    <!-- Reset Password (hidden initially) -->
+    <div class="section" id="reset-password-section">
+      <form id="reset-password-form">
+        <input type="email" name="email" placeholder="Enter Email" required readonly>
+        <input type="text" name="otp" placeholder="Enter OTP" required>
+        <input type="password" name="newPassword" placeholder="Enter New Password" required>
+        <button type="submit">Reset Password</button>
+      </form>
+    </div>
+
+    <a class="link" href="admin.html">Back to Login</a>
+  </div>
+
+  <script>
+    const requestForm = document.getElementById('request-otp-form');
+    const resetSection = document.getElementById('reset-password-section');
+    const resetForm = document.getElementById('reset-password-form');
+
+    requestForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(requestForm);
+      const email = formData.get('email');
+
+      try {
+        const res = await fetch('/admin/request-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          alert(data.message);
+          // hide request form, show reset form
+          requestForm.parentElement.style.display = 'none';
+          resetSection.style.display = 'block';
+          resetForm.email.value = email; // fill email
+        } else {
+          alert(data.error);
+        }
+      } catch (err) {
+        alert('Error sending OTP. Check server.');
+      }
+    });
+
+    resetForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(resetForm);
+      const payload = {
+        email: formData.get('email'),
+        otp: formData.get('otp'),
+        newPassword: formData.get('newPassword')
+      };
+
+      try {
+        const res = await fetch('/admin/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          alert(data.message);
+          window.location.href = '/admin.html'; // redirect to login
+        } else {
+          alert(data.error);
+        }
+      } catch (err) {
+        alert('Error resetting password. Check server.');
+      }
+    });
+  </script>
+</body>
+</html>
