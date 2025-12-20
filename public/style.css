@@ -4,7 +4,11 @@
     
 }
 */
-
+body {
+    background-color: black;
+    color: white; /* text readable rahe isliye */
+    margin: 0;
+  }
 nav img {
   height: 50px;
   width: 40px;
@@ -27,7 +31,8 @@ nav h1 {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 20px;
+    font-size: 30px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
     color: white;
     margin: 0;
 }
@@ -42,8 +47,7 @@ nav h1 {
 .header{
     min-height: 100vh;
     width: 100%;
-    background-image: linear-gradient(rgba(4,9,30,0.7),rgba(4,9,30,0.7)),url(slide2.jpeg);
-
+    background-color: black;
     background-position: center;
     background-size: cover;
     position: relative;
@@ -68,13 +72,16 @@ nav img{
 .nav-links ul li{
     list-style: none;
     display: inline-block;
-    padding: 6px 12px;
+    padding: 2px 12px;
     position: relative;
+    font-weight: 800;
+    
 }
 .nav-links ul li a{
     color: white;
     text-decoration: none;
-    font-size: 13px;
+    font-size: 18px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
     
 
 }
@@ -84,7 +91,7 @@ nav img{
     content: '';
     width: 0%;
     height: 2px;
-    background:#166592;
+    background:#000000;
     display: block;
     margin: auto;
     transition: 0.5s;
@@ -105,6 +112,7 @@ nav img{
 }
 .text-box h1{
     font-size: 50px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
 }
 .text-box{
     margin: 10px 0px 40px;
@@ -175,10 +183,12 @@ nav .fa{
     width: 80%;
     margin: auto;
     text-align: center;
+    color: black;
     padding-top: 100px;
 }
 h1{
     font-size: 38px;
+    color: #f5f5f5;
     font-weight: 600;
 
 }
@@ -188,6 +198,7 @@ p{
     font-weight: 300;
     line-height: 22px;
     padding: 10px;
+    color: rgb(174, 100, 100);
    font-style: normal;
 }
  .row{

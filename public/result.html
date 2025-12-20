@@ -59,7 +59,10 @@
       padding: 20px 15px;
       text-align: center;
     }
-
+body {
+    background-color: black;
+    margin: 0;
+  }
     form {
       margin-top: 20px;
     }
@@ -376,7 +379,7 @@ footer {
   <!-- ---------------------------------------------------------- -->
   <header>
    <a href="index.html" target="_blank">
-  <img src="logo.jpeg" alt="School Logo" />
+  <img src="content/logo.jpeg" alt="School Logo" />
 </a>
 
     <p>Star Public School</p>
@@ -392,9 +395,11 @@ footer {
     <option value="">Select Term</option>
     <option value="1st">1st Term</option>
     <option value="2nd">2nd Term</option>
-   <!-- <option value="3rd">3rd Term</option>
+   <!--<option value="3rd">3rd Term</option>
     <option value="annual">Annual</option>
     -->
+        <option value="annual">Annual</option>
+
   </select>
       <input type="text" id="class" placeholder="Enter Class" required />
       <input type="text" id="roll" placeholder="Enter Roll No" required />
@@ -455,7 +460,10 @@ footer {
         terminal === "1st" ? "First Terminal" :
         terminal === "2nd" ? "Second Terminal" :
         terminal === "3rd" ? "Third Terminal" :
-        "Annual Examination";
+        "Annual";
+        const resultYear =
+  terminal === "annual" ? "2025–26" : new Date().getFullYear();
+
 
       // Total per term
       const firstTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.firstTerm) || 0), 0);
@@ -472,7 +480,7 @@ footer {
       display.innerHTML = `
         <div class="result-card" id="resultCard">
           <div class="school-header">
-            <img src="logo.jpeg" alt="School Logo" />
+            <img src="content/logo.jpeg" alt="School Logo" />
             <div class="school-info">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
 <h2 style="
@@ -488,8 +496,7 @@ footer {
 
 
 <p class="school-address">${data.schoolAddress}</p>
-
-              <h3>${termTitle} Examination Result - ${new Date().getFullYear()}</h3>
+<h3>${termTitle} Examination Result - ${resultYear}</h3>
             </div>
           </div>
           <hr />
@@ -676,8 +683,8 @@ footer {
 </style>
 
           <div class="sign-stamp-wrapper">
-            <img src="stamp.jpeg" class="stamp" alt="School Stamp" />
-            <img src="sign.jpeg" class="sign" alt="Principal's Signature" />
+            <img src="content/stamp.jpeg" class="stamp" alt="School Stamp" />
+            <img src="content/sign.jpeg" class="sign" alt="Principal's Signature" />
             <p class="sign-text">Principal's Signature & Stamp</p>
           </div>
         </div>`;
