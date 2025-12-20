@@ -2,137 +2,126 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Public School - Admin Login</title>
+
   <link rel="stylesheet" href="style.css">
-
-  <style>
-    /* ===== HEADER FIX ===== */
-    nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 70px;
-  background: #3a9aa4;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  padding: 0 25px;
-  z-index: 1000;
-}
-
-nav img {
-  height: 50px;
-}
-
-nav h1 {
-  text-align: center;
-  color: #fff;
-  font-size: 22px;
-  margin: 0;
-  font-weight: 700;
-}
-
-nav ul {
-  display: flex;
-  gap: 20px;
-  margin-left: 1100px; /* RIGHT ALIGN */
-}
-
-
-nav ul li a {
-  color: #fff;
-  text-decoration: none;
-  text-align: right;
-  font-weight: 600;
-}
-
-    /* ===== PAGE LAYOUT FIX ===== */
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      padding-top: 90px; /* header ke niche space */
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    .container {
-      background: #fff;
-      padding: 40px 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 350px;
-      margin-top: 40px;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #007bff;
-      border: none;
-      border-radius: 5px;
-      color: #fff;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .link {
-      margin-top: 15px;
-      display: block;
-      color: #007bff;
-      text-decoration: none;
-      font-size: 14px;
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 
-<body>
+<body class="admin-page">
 
-<!-- ===== HEADER ===== -->
-<nav>
-  <a href="index.html"><img src="content/logo.jpeg"></a>
-  <h1>Star Public School</h1>
-  <ul>
-    <li><a href="index.html">HOME</a></li>
-    <li><a href="result.html">RESULT</a></li>
-    <li><a href="contact.html">CONTACT</a></li>
-  </ul>
-</nav>
+  <!-- Navbar (same as homepage) -->
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="index.html" aria-label="Star Public School Home">
+      <img src="content/logo.jpeg" alt="Star Public School logo">
+      <span class="brand-name">Star Public School</span>
+    </a>
 
-<!-- ===== LOGIN BOX ===== -->
-<div class="container">
-  <h2>Welcome to Admin Login</h2>
+    <div class="nav-links" id="navLinks" aria-label="Site links">
+      <button class="nav-icon close" type="button" onclick="hideMenu()" aria-label="Close menu">
+        <i class="fa fa-times" aria-hidden="true"></i>
+      </button>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="result.html">Result</a></li>
+        <li><a href="admin.html">Admin</a></li>
+      </ul>
+    </div>
 
-  <form method="POST" action="/admin/login">
-    <input type="email" name="email" placeholder="Enter Email ID" required>
-    <input type="password" name="password" placeholder="Enter Password" required>
-    <button type="submit">Login</button>
-  </form>
+    <button class="nav-icon open" type="button" onclick="showMenu()" aria-label="Open menu">
+      <i class="fa fa-bars" aria-hidden="true"></i>
+    </button>
+  </nav>
 
-  <a class="link" href="reset.html">Forgot Password?</a>
-</div>
+  <main class="admin-main">
+    <section class="admin-card" aria-label="Admin login">
+      <div class="admin-header">
+        <h1 class="admin-title">Admin Login</h1>
+        <p class="admin-sub">Sign in to manage results and student information.</p>
+      </div>
 
+      <form class="admin-form" method="POST" action="/admin/login">
+        <label class="admin-field">
+          <span>Email</span>
+          <input type="email" name="email" placeholder="Enter Email ID" autocomplete="email" required>
+        </label>
+
+        <label class="admin-field">
+          <span>Password</span>
+          <input type="password" name="password" placeholder="Enter Password" autocomplete="current-password" required>
+        </label>
+
+        <button class="btn primary admin-submit" type="submit">Login</button>
+      </form>
+
+      <a class="admin-link" href="reset.html">Forgot Password?</a>
+    </section>
+  </main>
+
+  <footer class="footer" aria-label="Footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-row">
+            <img class="footer-logo" src="content/logo.jpeg" alt="Star Public School logo">
+            <div>
+              <div class="footer-title">Star Public School</div>
+              <div class="footer-tagline">Learning • Values • Excellence</div>
+            </div>
+          </div>
+          <p class="footer-text">
+            A trusted CBSE English medium school focused on strong academics, discipline, and holistic development.
+          </p>
+          <div class="footer-social" aria-label="Social links">
+            <a class="social-btn" href="#" aria-label="Facebook"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a class="social-btn" href="#" aria-label="Instagram"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+            <a class="social-btn" href="#" aria-label="YouTube"><i class="fa fa-youtube-play" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-subtitle">Quick Links</div>
+          <ul class="footer-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="result.html">Result</a></li>
+            <li><a href="admin.html">Admin</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-subtitle">Contact</div>
+          <ul class="footer-contact">
+            <li><i class="fa fa-map-marker" aria-hidden="true"></i><span>Meghwal Mathia, Post - Mathia, District - West Champaran</span></li>
+            <li><i class="fa fa-phone" aria-hidden="true"></i><span><a href="tel:+919006457330">+91 9006457330</a></span></li>
+            <li><i class="fa fa-envelope" aria-hidden="true"></i><span><a href="mailto:a9006457330@gmail.com">a9006457330@gmail.com</a></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2016 Star Public School. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu (same behavior as homepage)
+    var navLinks = document.getElementById("navLinks");
+    function showMenu() { navLinks.style.right = "0"; }
+    function hideMenu() { navLinks.style.right = "-320px"; }
+    if (navLinks) {
+      navLinks.querySelectorAll("a").forEach(function (a) {
+        a.addEventListener("click", hideMenu);
+      });
+    }
+  </script>
 </body>
 </html>

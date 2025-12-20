@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SPS School - Student Result Portal</title>
+  <title>Star Public School - Student Result Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 
 
   <style>
@@ -357,6 +362,7 @@ footer {
     @media print {
       body {
         -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       .result-card {
         box-shadow: none !important;
@@ -366,30 +372,330 @@ footer {
       #downloadBtn,
       form,
       header,
+      .nav,
       footer {
         display: none !important;
       }
     }
+
+    /* ----------------------------------------------------------
+       Result page: match homepage bright design
+    ---------------------------------------------------------- */
+    body.result-page {
+      font-family: "Roboto", system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .result-main {
+      width: min(var(--max), 92%);
+      margin: 0 auto;
+      padding: 110px 0 44px;
+    }
+
+    .result-section {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(11, 27, 58, 0.12);
+      border-radius: 20px;
+      box-shadow: 0 18px 44px rgba(11, 27, 58, 0.14);
+      padding: 22px 18px;
+      text-align: center;
+    }
+
+    .result-section h2 {
+      margin: 4px 0 6px;
+      font-size: clamp(22px, 2.6vw, 30px);
+      letter-spacing: -0.2px;
+      color: rgba(11, 27, 58, 0.92);
+    }
+
+    .result-section .sub {
+      margin: 0 auto 10px;
+      max-width: 70ch;
+      color: rgba(11, 27, 58, 0.70);
+      line-height: 1.6;
+    }
+
+    #resultForm {
+      margin-top: 14px;
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+    }
+
+    #resultForm input,
+    #resultForm select {
+      padding: 12px 12px;
+      font-size: 16px;
+      width: 100%;
+      max-width: 360px;
+      border: 1px solid rgba(11, 27, 58, 0.16);
+      border-radius: 12px;
+      background: #fff;
+      color: rgba(11, 27, 58, 0.92);
+      outline: none;
+    }
+
+    #resultForm input:focus,
+    #resultForm select:focus {
+      border-color: rgba(11, 95, 255, 0.35);
+      box-shadow: 0 0 0 3px rgba(11, 95, 255, 0.15);
+    }
+
+    #resultForm button[type="submit"] {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .result-note {
+      font-size: 0.95rem;
+      color: rgba(11, 27, 58, 0.70);
+      margin: 18px auto 0;
+      text-align: left;
+      max-width: 760px;
+      background: rgba(11, 95, 255, 0.04);
+      border: 1px solid rgba(11, 95, 255, 0.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+
+    #downloadBtn {
+      display: none;
+      margin: 18px auto 0;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    /* Result card refinements (keeps PDF/print safe) */
+    .result-card {
+      background: #ffffff;
+      border: 1px solid rgba(11, 27, 58, 0.16);
+      box-shadow: 0 14px 34px rgba(11, 27, 58, 0.14);
+      border-radius: 12px;
+    }
+
+    .result-card::after {
+      color: rgba(11, 27, 58, 0.04);
+    }
+
+    .school-info h2 {
+      font-family: 'Cinzel Decorative', serif;
+      margin: 10px 0 10px 0;
+    }
+
+    .school-address {
+      margin: 3px 0 10px 0;
+      line-height: 1.2;
+      color: rgba(11, 27, 58, 0.70);
+      font-weight: 600;
+    }
+
+    .marksheet-bulletin {
+      margin-top: 12px;
+      border: 1px solid rgba(11, 27, 58, 0.14);
+      background-color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: 0 10px 22px rgba(11, 27, 58, 0.10);
+      color: rgba(11, 27, 58, 0.84);
+      text-align: left;
+      max-width: 740px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .marksheet-bulletin h3 {
+      text-align: center;
+      font-size: 14px;
+      margin: 0 0 10px 0;
+      color: rgba(11, 27, 58, 0.92);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .marksheet-bulletin ul {
+      list-style-type: disc;
+      margin: 0;
+      padding-left: 22px;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .marksheet-bulletin li {
+      margin-bottom: 6px;
+    }
+
+    /* ----------------------------------------------------------
+       Result Card (ONLY) - Professional UI upgrade
+       ---------------------------------------------------------- */
+    .result-card {
+      background: #ffffff !important;
+      border: 1.5px solid rgba(11, 27, 58, 0.18) !important;
+      border-radius: 14px !important;
+      box-shadow: 0 18px 44px rgba(11, 27, 58, 0.14) !important;
+      overflow: hidden;
+    }
+
+    .result-card::after {
+      font-size: 92px !important;
+      color: rgba(11, 27, 58, 0.035) !important;
+      letter-spacing: 2px;
+    }
+
+    .result-card hr {
+      border: none;
+      height: 1px;
+      background: rgba(11, 27, 58, 0.12);
+      margin: 10px 0 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .school-header {
+      gap: 14px;
+      padding-bottom: 6px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .school-header img {
+      height: 86px !important;
+      width: 86px !important;
+      border-radius: 16px;
+      object-fit: cover;
+      border: 1px solid rgba(11, 27, 58, 0.14);
+      box-shadow: 0 10px 22px rgba(11, 27, 58, 0.12);
+      background: #fff;
+    }
+
+    .school-info h2 {
+      font-family: 'Cinzel Decorative', serif !important;
+      font-size: 30px !important;
+      letter-spacing: 0.6px !important;
+      margin: 6px 0 6px 0 !important;
+      line-height: 1.1 !important;
+      color: #0b2d66 !important;
+    }
+
+    .school-info h3 {
+      margin: 6px 0 0 0 !important;
+      font-size: 16px !important;
+      font-weight: 800 !important;
+      color: rgba(11, 27, 58, 0.86) !important;
+    }
+
+    .school-address {
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      color: rgba(11, 27, 58, 0.70) !important;
+      margin: 4px 0 6px 0 !important;
+      line-height: 1.4 !important;
+    }
+
+    table {
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      overflow: hidden;
+      border-radius: 10px;
+      border: 1px solid rgba(11, 27, 58, 0.16);
+      position: relative;
+      z-index: 2;
+    }
+
+    th,
+    td {
+      border: none !important;
+      border-bottom: 1px solid rgba(11, 27, 58, 0.14) !important;
+      border-right: 1px solid rgba(11, 27, 58, 0.12) !important;
+      padding: 8px 10px !important;
+    }
+
+    tr td:last-child,
+    tr th:last-child {
+      border-right: none !important;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none !important;
+    }
+
+    th {
+      background: linear-gradient(180deg, rgba(11, 95, 255, 0.10), rgba(11, 95, 255, 0.04)) !important;
+      color: rgba(11, 27, 58, 0.90) !important;
+      font-weight: 800 !important;
+    }
+
+    .details-table td:first-child {
+      background: rgba(11, 95, 255, 0.04);
+      color: rgba(11, 27, 58, 0.86);
+      font-weight: 800;
+      width: 180px !important;
+    }
+
+    .marks-table tbody tr:nth-child(odd):not(.total-row) td {
+      background: rgba(11, 27, 58, 0.015);
+    }
+
+    .total-row {
+      background: rgba(11, 95, 255, 0.06) !important;
+      font-weight: 900 !important;
+    }
+
+    /* Stamp & signature area */
+    .sign-stamp-wrapper {
+      right: 22px !important;
+      bottom: 16px !important;
+      width: 220px !important;
+      z-index: 3 !important;
+    }
+
+    .stamp {
+      width: 130px !important;
+      opacity: 0.35 !important;
+      margin-bottom: -46px !important;
+    }
+
+    .sign {
+      width: 92px !important;
+      margin-bottom: 2px !important;
+      opacity: 0.92 !important;
+    }
   </style>
 </head>
 
-<body>
+<body class="result-page">
   <!-- ---------------------------------------------------------- -->
-  <!-- Header -->
+  <!-- Navbar (same as homepage) -->
   <!-- ---------------------------------------------------------- -->
-  <header>
-   <a href="index.html" target="_blank">
-  <img src="content/logo.jpeg" alt="School Logo" />
-</a>
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="index.html" aria-label="Star Public School Home">
+      <img src="content/logo.jpeg" alt="Star Public School logo">
+      <span class="brand-name">Star Public School</span>
+    </a>
 
-    <p>Star Public School</p>
-  </header>
+    <div class="nav-links" id="navLinks" aria-label="Site links">
+      <button class="nav-icon close" type="button" onclick="hideMenu()" aria-label="Close menu">
+        <i class="fa fa-times" aria-hidden="true"></i>
+      </button>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="result.html">Result</a></li>
+        <li><a href="admin.html">Admin</a></li>
+      </ul>
+    </div>
+
+    <button class="nav-icon open" type="button" onclick="showMenu()" aria-label="Open menu">
+      <i class="fa fa-bars" aria-hidden="true"></i>
+    </button>
+  </nav>
 
   <!-- ---------------------------------------------------------- -->
   <!-- Main Section : Form + Result Display -->
   <!-- ---------------------------------------------------------- -->
-  <div class="section" id="result">
+  <main class="result-main">
+  <section class="result-section" id="result">
     <h2>Check Your Result</h2>
+    <p class="sub">Enter your term, class and roll number to view and download your result.</p>
     <form id="resultForm">
        <select id="terminal" required>
     <option value="">Select Term</option>
@@ -403,9 +709,9 @@ footer {
   </select>
       <input type="text" id="class" placeholder="Enter Class" required />
       <input type="text" id="roll" placeholder="Enter Roll No" required />
-      <button type="submit">Get Result</button>
+      <button class="btn primary" type="submit">Get Result</button>
     </form>
-    <p style="font-size: 0.9rem; color: #888; margin-top: 60px;text-align: left;">
+    <p class="result-note">
   🔍 <strong>नोट:</strong> कृपया कक्षा (Class Name) दर्ज करते समय निम्नलिखित संक्षिप्त रूप (शॉर्ट फॉर्म) का उपयोग करें:<br />
   👉 <strong>NURSERY-A</strong> के लिए <strong>NURA</strong>, 
   👉<strong>NURSERY-B</strong> के लिए <strong>NURB</strong>,
@@ -416,14 +722,61 @@ footer {
 
 
     <div id="resultDisplay"></div>
-    <button id="downloadBtn" onclick="downloadPDF()">Download as PDF</button>
-  </div>
+    <button id="downloadBtn" class="btn primary" type="button" onclick="downloadPDF()">Download as PDF</button>
+  </section>
+  </main>
 
   <!-- ---------------------------------------------------------- -->
   <!-- Footer -->
   <!-- ---------------------------------------------------------- -->
-  <footer>
-    &copy; 2025 Star Public School. All rights reserved.
+  <footer class="footer" aria-label="Footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-row">
+            <img class="footer-logo" src="content/logo.jpeg" alt="Star Public School logo">
+            <div>
+              <div class="footer-title">Star Public School</div>
+              <div class="footer-tagline">Learning • Values • Excellence</div>
+            </div>
+          </div>
+          <p class="footer-text">
+            A trusted CBSE English medium school focused on strong academics, discipline, and holistic development.
+          </p>
+          <div class="footer-social" aria-label="Social links">
+            <a class="social-btn" href="#" aria-label="Facebook"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a class="social-btn" href="#" aria-label="Instagram"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+            <a class="social-btn" href="#" aria-label="YouTube"><i class="fa fa-youtube-play" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-subtitle">Quick Links</div>
+          <ul class="footer-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="result.html">Result</a></li>
+            <li><a href="admin.html">Admin</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-subtitle">Contact</div>
+          <ul class="footer-contact">
+            <li><i class="fa fa-map-marker" aria-hidden="true"></i><span>Meghwal Mathia, Post - Mathia, District - West Champaran</span></li>
+            <li><i class="fa fa-phone" aria-hidden="true"></i><span><a href="tel:+919006457330">+91 9006457330</a></span></li>
+            <li><i class="fa fa-envelope" aria-hidden="true"></i><span><a href="mailto:a9006457330@gmail.com">a9006457330@gmail.com</a></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2025 Star Public School. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
   </footer>
 
   <!-- ---------------------------------------------------------- -->
@@ -431,6 +784,18 @@ footer {
   <!-- ---------------------------------------------------------- -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+  <script>
+    // Mobile menu (same behavior as homepage)
+    var navLinks = document.getElementById("navLinks");
+    function showMenu() { navLinks.style.right = "0"; }
+    function hideMenu() { navLinks.style.right = "-320px"; }
+    if (navLinks) {
+      navLinks.querySelectorAll("a").forEach(function (a) {
+        a.addEventListener("click", hideMenu);
+      });
+    }
+  </script>
 
   <!-- ---------------------------------------------------------- -->
   <!-- Fetch Result & Render -->
@@ -482,7 +847,6 @@ footer {
           <div class="school-header">
             <img src="content/logo.jpeg" alt="School Logo" />
             <div class="school-info">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
 <h2 style="
   font-family: 'Cinzel Decorative', serif;
   font-size: 30px;
@@ -601,86 +965,6 @@ footer {
     <li>NA: NA denotes Not Applicable for particular subject for particular class</li>
   </ul>
 </div>
-
-<style>
-  .school-info h2 {
-  background: linear-gradient(45deg, #ff4b1f, #ff9068, #ffc371, #ffedbc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1; /* text ke upar neeche gap */
-  margin: 5px 0 0px 0; /* thoda extra space */
-  padding: 1px 0; /* optional for extra breathing room */
-}
-
-
-.school-info p {
-  background: linear-gradient(45deg, #4facfe, #00f2fe, #43e97b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.school-address {
-  background: linear-gradient(45deg, #f7971e, #ffd200, #ff6a00);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.marksheet-bulletin {
-  margin-top: 10px;
-  border: 1px solid #aaa;
-  background-color: #fdfdfd;
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.1);
-  font-family: "Georgia", "Times New Roman", serif;
-  color: #333;
-  text-align: left; /* Force all text inside to align left */
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.marksheet-bulletin h3 {
-  text-align: center;
-  font-size: 16px;
-  margin-bottom: 10px;
-  color: #222;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-..school-address h3 {
-  margin: 3px 0;          /* upar-niche ka gap kam kare */
-  line-height: 1.2;       /* line ke beech gap kam kare */
-  font-family: 'Cinzel Decorative', serif; /* custom font */
-  font-weight: 700;       /* bold */
-  font-size: 16px;        /* font size adjust */
-  color: #1a237e;         /* optional color */
-}
-
-
-.school-address {
-  font-size: 20px !important;
-  font-weight:500
-  margin: 1px 0;
-  line-height: 0.1;
-  margin-bottom:30px
-}
-
-
-.marksheet-bulletin ul {
-  list-style-type: disc;
-  margin: 0;
-  padding-left: 30px;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.marksheet-bulletin li {
-  margin-bottom: 4px;
-}
-</style>
 
           <div class="sign-stamp-wrapper">
             <img src="content/stamp.jpeg" class="stamp" alt="School Stamp" />

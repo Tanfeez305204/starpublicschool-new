@@ -3,70 +3,111 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Provisional Certificate</title>
+<title>Star Public School - Provisional Certificate</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 
 <!-- ✅ html2pdf LIBRARY (MOST IMPORTANT FIX) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-<button id="logoutBtn" style="
-position:fixed;top:20px;right:20px;
-padding:8px 16px;background:#dc3545;color:#fff;
-border:none;border-radius:5px;cursor:pointer;z-index:9999;">
-Logout
-</button>
+<!-- Extra reliability for 1-page perfect fit -->
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body{
   margin:0;
-  font-family:Georgia,'Times New Roman',serif;
-  background:#f3ead7;
+  font-family:"Roboto", system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
 }
 
-/* NAV */
-nav{
-  position:fixed;top:0;left:0;width:100%;height:70px;
-  background:#3a9aa4;display:flex;align-items:center;
-  padding:0 30px;z-index:1000;
+.prov-main{
+  width: min(var(--max), 92%);
+  margin: 0 auto;
+  padding: 120px 0 54px;
 }
-nav img{height:50px;}
-nav h1{flex:1;text-align:center;color:#fff;font-size:28px;margin-left:350px;}
-nav ul{list-style:none;display:flex;gap:25px;margin-right:150px;}
-nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
+
+.prov-topbar{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom: 12px;
+}
+
+.prov-logout{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(220, 53, 69, 0.22);
+  background: rgba(220, 53, 69, 0.08);
+  color: rgba(185, 28, 28, 0.95);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.prov-logout:hover{
+  background: rgba(220, 53, 69, 0.12);
+}
 
 /* SEARCH CARD */
 .search-card{
-  max-width:360px;
-  margin:130px auto;
-  background:#f7f7f7;
-  padding:25px;
-  border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,.1);
-  text-align:center;
+  max-width: 520px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 22px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(11, 27, 58, 0.12);
+  box-shadow: 0 18px 44px rgba(11, 27, 58, 0.14);
+  text-align: left;
 }
 .input{
   width:100%;
-  padding:10px;
-  margin-bottom:12px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  text-align:center;
+  padding: 12px 12px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(11, 27, 58, 0.16);
+  border-radius: 12px;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
 }
-.btn{
-  padding:10px 18px;
-  background:#3a9aa4;
-  border:none;
-  color:#fff;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:600;
+.input:focus{
+  border-color: rgba(11, 95, 255, 0.35);
+  box-shadow: 0 0 0 3px rgba(11, 95, 255, 0.15);
 }
-.btn:hover{background:#2e7f87}
+
+.search-title{
+  margin: 4px 0 6px;
+  font-size: 24px;
+  letter-spacing: -0.2px;
+}
+
+.search-sub{
+  margin: 0 0 14px;
+  color: rgba(11, 27, 58, 0.70);
+  line-height: 1.6;
+}
+
+.search-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search-actions .btn{
+  flex: 1;
+  min-width: 220px;
+}
 
 /* ================= CERTIFICATE ================= */
 .wrap{
   display:flex;
   justify-content:center;
-  margin-top:110px;
+  margin-top: 18px;
 }
 
 .cert{
@@ -81,6 +122,11 @@ nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
   padding:90px 95px;
   box-sizing:border-box;
   box-shadow:0 18px 45px rgba(0,0,0,.35);
+}
+
+/* During PDF capture: remove shadow to avoid layout overflow */
+.cert.pdf-capture{
+  box-shadow:none;
 }
 
 /* TOP LEFT LOGO */
@@ -149,8 +195,8 @@ nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
   opacity:0.85;
 }
 
-/* FOOTER */
-.footer{
+/* CERTIFICATE FOOTER (scoped) */
+.cert-footer{
   position:absolute;
   bottom:62px;
   left:95px;
@@ -158,7 +204,7 @@ nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
   display:flex;
   justify-content:space-between;
 }
-.footer strong{
+.cert-footer strong{
   font-size:16px;
   border-bottom:2px solid #b08a2e;
 }
@@ -168,7 +214,8 @@ nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
   display:none;
   justify-content:center;
   gap:20px;
-  margin:25px auto;
+  margin: 18px auto 0;
+  width: min(var(--max), 92%);
 }
 #certActions .btn{
   background:linear-gradient(135deg,#caa24d,#f1d27a);
@@ -177,27 +224,51 @@ nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
 </style>
 </head>
 
-<body>
+<body class="provisional-page">
 
-<nav>
-  <a href="index.html"><img src="content/logo.jpeg"></a>
-  <h1>Star Public School</h1>
-  <ul>
-    <li><a href="index.html">HOME</a></li>
-    <li><a href="result.html">RESULT</a></li>
-    <li><a href="">CONTACT</a></li>
-  </ul>
-</nav>
+  <!-- Navbar (same as site) -->
+  <nav class="nav" aria-label="Primary">
+    <a class="brand" href="index.html" aria-label="Star Public School Home">
+      <img src="content/logo.jpeg" alt="Star Public School logo">
+      <span class="brand-name">Star Public School</span>
+    </a>
 
-<div class="search-card">
-  <h2>Search Result</h2>
-  <input id="classInput" class="input" placeholder="Enter Class">
-  <input id="rollInput" class="input" placeholder="Enter Roll Number">
-  <button class="btn" id="searchBtn">Search</button>
-</div>
+    <div class="nav-links" id="navLinks" aria-label="Site links">
+      <button class="nav-icon close" type="button" onclick="hideMenu()" aria-label="Close menu">
+        <i class="fa fa-times" aria-hidden="true"></i>
+      </button>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="result.html">Result</a></li>
+        <li><a href="admin.html">Admin</a></li>
+      </ul>
+    </div>
 
-<div class="wrap">
-<div class="cert" id="certificate">
+    <button class="nav-icon open" type="button" onclick="showMenu()" aria-label="Open menu">
+      <i class="fa fa-bars" aria-hidden="true"></i>
+    </button>
+  </nav>
+
+  <main class="prov-main">
+    <div class="prov-topbar">
+      <button id="logoutBtn" class="prov-logout" type="button">
+        <i class="fa fa-sign-out" aria-hidden="true"></i>
+        Logout
+      </button>
+    </div>
+
+    <div class="search-card">
+      <h2 class="search-title">Provisional Certificate</h2>
+      <p class="search-sub">Enter class and roll number to generate the provisional certificate and download as PDF.</p>
+      <input id="classInput" class="input" placeholder="Enter Class">
+      <input id="rollInput" class="input" placeholder="Enter Roll Number">
+      <div class="search-actions">
+        <button class="btn primary" id="searchBtn" type="button">Search</button>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="cert" id="certificate">
 
   <img src="content/logo.jpeg" class="cert-logo">
 
@@ -225,7 +296,7 @@ nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
     <img src="content/stamp.jpeg">
   </div>
 
-  <div class="footer">
+  <div class="cert-footer">
     <div>Patna, Dated: <span class="value" id="dateVal"></span></div>
     <div>
       <strong>Ajay Kumar Giri</strong><br>
@@ -237,8 +308,8 @@ nav ul li a{color:#fff;text-decoration:none;font-weight:600;}
 </div>
 
 <div id="certActions">
-  <button class="btn" id="searchMoreBtn">Search More</button>
-  <button class="btn" id="downloadBtn">Download</button>
+  <button class="btn ghost" id="searchMoreBtn" type="button">Search More</button>
+  <button class="btn primary" id="downloadBtn" type="button">Download</button>
 </div>
 
 <script>
@@ -276,13 +347,124 @@ searchMoreBtn.onclick=()=>{
 }
 
 downloadBtn.onclick=()=>{
-  html2pdf().set({
-    filename:'provisional.pdf',
-    html2canvas:{ scale:3, useCORS:true },
-    jsPDF:{ unit:'mm', format:'a5', orientation:'landscape' }
-  }).from(document.getElementById('certificate')).save();
+  (async function () {
+    const el = document.getElementById('certificate');
+    if (!el) return;
+
+    // Ensure fonts + images are ready before capture (prevents missing border/stamp etc.)
+    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
+    const imgs = Array.prototype.slice.call(el.querySelectorAll('img'));
+    await Promise.all(imgs.map(img => new Promise(resolve => {
+      if (img.complete) return resolve();
+      img.onload = resolve;
+      img.onerror = resolve;
+    })));
+
+    el.classList.add('pdf-capture');
+
+    // Capture certificate as image
+    const canvas = await html2canvas(el, {
+      scale: 3,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      scrollX: 0,
+      scrollY: 0
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+    // Put image on exactly ONE A5 landscape page
+    const jspdf = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+    if (!jspdf) {
+      el.classList.remove('pdf-capture');
+      return alert("PDF library not loaded. Please refresh and try again.");
+    }
+
+    const pdf = new jspdf({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
+    pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
+    pdf.save('provisional.pdf');
+
+    el.classList.remove('pdf-capture');
+  })();
 };
+
+// Optional logout (if backend route exists)
+logoutBtn && (logoutBtn.onclick = async () => {
+  try {
+    // If your server has logout route, it will work; otherwise it will just go back home.
+    await fetch("/admin/logout", { method: "POST" });
+  } catch (e) {}
+  window.location.href = "index.html";
+});
 </script>
+
+  </main>
+
+  <footer class="footer" aria-label="Footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-row">
+            <img class="footer-logo" src="content/logo.jpeg" alt="Star Public School logo">
+            <div>
+              <div class="footer-title">Star Public School</div>
+              <div class="footer-tagline">Learning • Values • Excellence</div>
+            </div>
+          </div>
+          <p class="footer-text">
+            A trusted CBSE English medium school focused on strong academics, discipline, and holistic development.
+          </p>
+          <div class="footer-social" aria-label="Social links">
+            <a class="social-btn" href="#" aria-label="Facebook"><i class="fa fa-facebook" aria-hidden="true"></i></a>
+            <a class="social-btn" href="#" aria-label="Instagram"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+            <a class="social-btn" href="#" aria-label="YouTube"><i class="fa fa-youtube-play" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-subtitle">Quick Links</div>
+          <ul class="footer-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="result.html">Result</a></li>
+            <li><a href="admin.html">Admin</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <div class="footer-subtitle">Contact</div>
+          <ul class="footer-contact">
+            <li><i class="fa fa-map-marker" aria-hidden="true"></i><span>Meghwal Mathia, Post - Mathia, District - West Champaran</span></li>
+            <li><i class="fa fa-phone" aria-hidden="true"></i><span><a href="tel:+919006457330">+91 9006457330</a></span></li>
+            <li><i class="fa fa-envelope" aria-hidden="true"></i><span><a href="mailto:a9006457330@gmail.com">a9006457330@gmail.com</a></span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2016 Star Public School. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu (same behavior as homepage)
+    var navLinks = document.getElementById("navLinks");
+    function showMenu() { navLinks.style.right = "0"; }
+    function hideMenu() { navLinks.style.right = "-320px"; }
+    if (navLinks) {
+      navLinks.querySelectorAll("a").forEach(function (a) {
+        a.addEventListener("click", hideMenu);
+      });
+    }
+  </script>
 
 </body>
 </html>
