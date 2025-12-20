@@ -29,6 +29,51 @@ const safeValue = (val, fallback = "") =>
   val === undefined || val === null || String(val).trim() === "" ? fallback : String(val).trim();
 
 const isNumeric = (val) => !isNaN(parseFloat(val)) && isFinite(val);
+const calculatePercentageAndDivision = (
+  studentRow,
+  subjects,
+  isLowerClass
+) => {
+  if (!studentRow) {
+    return { percentage: "0.00", division: "INCOMPLETE" };
+  }
+
+  let totalObtained = 0;
+  let hasIncomplete = false;
+
+  const validSubjects = subjects.filter(sub => {
+    const name = sub.trim().toUpperCase();
+    if (name.includes("DRAWING")) return false;
+    if (isLowerClass && (name.includes("SCIENCE") || name.includes("S.S.T")))
+      return false;
+    return true;
+  });
+
+  validSubjects.forEach(sub => {
+    const val = String(studentRow[sub] || "").trim().toUpperCase();
+
+    if (["", "AB", "-", "NA"].includes(val)) {
+      hasIncomplete = true;
+      return;
+    }
+
+    if (!isNaN(val)) {
+      totalObtained += Number(val);
+    }
+  });
+
+  const totalFullMarks = validSubjects.length * 100 || 1;
+  const percentage = ((totalObtained / totalFullMarks) * 100).toFixed(2);
+
+  let division;
+  if (hasIncomplete) division = "INCOMPLETE";
+  else if (percentage >= 60) division = "First";
+  else if (percentage >= 45) division = "Second";
+  else if (percentage >= 30) division = "Third";
+  else division = "Fail";
+
+  return { percentage, division };
+};
 
 app.get('/result', (req, res) => {
   const queryClass = req.query.class?.trim().toUpperCase();
@@ -324,49 +369,68 @@ app.get('/provisional', (req, res) => {
 
     existingPC = newPC; // use for response
   }
-const calculateDivision = (studentRow) => {
-  let total = 0;
-  let subjectCount = 0;
+  // ---------- SAME LOGIC AS /result ----------
+
+  const lowerClasses = [
+    "NURSERY-A", "NURSERY-B", "NURSERY-C",
+    "L.K.G-A", "L.K.G-B", "U.K.G-A", "U.K.G-B"
+  ];
+  const isLowerClass = lowerClasses.includes(queryClass);
+
+  const ignoreKeys = [
+    "Class","Roll","Name","Father Name","FatherName",
+    "P_C NO","P C NO","PC NO","Division","School Name","Year"
+  ];
+
+  const subjects = Object.keys(student).filter(k => !ignoreKeys.includes(k));
+
+  let totalObtained = 0;
   let hasIncomplete = false;
 
-  Object.keys(studentRow).forEach((key) => {
-    if (
-      ["Class","Roll","Name","Father Name","FatherName","P_C NO","P C NO","PC NO","Division","School Name","Year"].includes(key)
-    ) return;
+  const validSubjects = subjects.filter(sub => {
+    const name = sub.trim().toUpperCase();
+    if (name.includes("DRAWING")) return false;
+    if (isLowerClass && (name.includes("SCIENCE") || name.includes("S.S.T")))
+      return false;
+    return true;
+  });
 
-    const val = String(studentRow[key] || "").trim().toUpperCase();
-
-   
-
+  validSubjects.forEach(sub => {
+    const val = String(student[sub] || "").trim().toUpperCase();
+    if (["", "AB", "-", "NA"].includes(val)) {
+      hasIncomplete = true;
+      return;
+    }
     if (!isNaN(val)) {
-      total += Number(val);
-      subjectCount++;
+      totalObtained += Number(val);
     }
   });
 
-  if (hasIncomplete) return "INCOMPLETE";
+  const totalFullMarks = validSubjects.length * 100 || 1;
+  const percentageAnnual = ((totalObtained / totalFullMarks) * 100).toFixed(2);
 
-  const fullMarks = subjectCount * 100 || 1;
-  const percent = (total / fullMarks) * 100;
+  let division;
+  if (hasIncomplete) division = "INCOMPLETE";
+  else if (percentageAnnual >= 60) division = "First";
+  else if (percentageAnnual >= 45) division = "Second";
+  else if (percentageAnnual >= 30) division = "Third";
+  else division = "Fail";
 
-  if (percent >= 60) return "First";
-  if (percent >= 45) return "Second";
-  if (percent >= 30) return "Third";
-  return "Fail";
-};
 
   // Response
-  res.json({
-    studentName: safeValue(student["Name"]),
-    fatherName: safeValue(student["Father Name"]),
-    schoolName: safeValue(student["School Name"] || "STAR PUBLIC SCHOOL, MATHIA"),
-    class: safeValue(student["Class"]),
-    rollNo: safeValue(student["Roll"]),
-    year: safeValue(student["Year"] || "Second Term Exam 2025-26"),
-division: safeValue(student["Division"] || calculateDivision(student)),
-    date: new Date().toLocaleDateString("en-GB"),
-    pcNo: existingPC
-  });
+ res.json({
+  studentName: safeValue(student["Name"]),
+  fatherName: safeValue(student["Father Name"]),
+  schoolName: safeValue(student["School Name"] || "STAR PUBLIC SCHOOL, MATHIA"),
+  class: safeValue(student["Class"]),
+  rollNo: safeValue(student["Roll"]),
+  year: safeValue(student["Year"] || "Annual Exam 2025-26"),
+  percentageAnnual,
+  division,
+  date: new Date().toLocaleDateString("en-GB"),
+  pcNo: existingPC
+});
+
 });
 
 
