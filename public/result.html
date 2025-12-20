@@ -59,7 +59,10 @@
       padding: 20px 15px;
       text-align: center;
     }
-
+body {
+    background-color: black;
+    margin: 0;
+  }
     form {
       margin-top: 20px;
     }
@@ -392,7 +395,7 @@ footer {
     <option value="">Select Term</option>
     <option value="1st">1st Term</option>
     <option value="2nd">2nd Term</option>
-   <!-- <option value="3rd">3rd Term</option>
+   <!--<option value="3rd">3rd Term</option>
     <option value="annual">Annual</option>
     -->
   </select>
@@ -455,7 +458,10 @@ footer {
         terminal === "1st" ? "First Terminal" :
         terminal === "2nd" ? "Second Terminal" :
         terminal === "3rd" ? "Third Terminal" :
-        "Annual Examination";
+        "Annual";
+        const resultYear =
+  terminal === "annual" ? "2025–26" : new Date().getFullYear();
+
 
       // Total per term
       const firstTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.firstTerm) || 0), 0);
@@ -488,8 +494,7 @@ footer {
 
 
 <p class="school-address">${data.schoolAddress}</p>
-
-              <h3>${termTitle} Examination Result - ${new Date().getFullYear()}</h3>
+<h3>${termTitle} Examination Result - ${resultYear}</h3>
             </div>
           </div>
           <hr />

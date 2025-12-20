@@ -73,7 +73,7 @@ app.get('/result', (req, res) => {
     ...Object.keys(data.third || {}),
     ...Object.keys(data.annual || {}),
   ].filter(
-    (k) => !["Class", "Roll", "Name", "FatherName", "Father Name"].includes(k)
+    (k) => !["Class", "Roll", "Name", "FatherName", "Father Name","P_C NO","pcNO"].includes(k)
   );
 
   const subjects = allKeys.reduce((unique, sub) => {
@@ -135,6 +135,16 @@ app.get('/result', (req, res) => {
       AnnTerm: terminal === "annual" ? getVal(data.annual) : 0,
     };
   });
+const isResultAvailable = (termData, visibleSubjects) => {
+  if (!termData) return false;
+
+  return visibleSubjects.some((sub) => {
+    const val = termData[sub];
+    if (val === undefined || val === null) return false;
+    const v = String(val).trim().toUpperCase();
+    return !["", "AB", "-", "NA"].includes(v);
+  });
+};
 
   // ✅ Total Calculation — exclude Drawing
   const calcTotal = (sheetData) =>
@@ -142,7 +152,7 @@ app.get('/result', (req, res) => {
       ? Object.keys(sheetData)
           .filter(
             (k) =>
-              !["Class", "Roll", "Name", "FatherName", "Father Name"].includes(k) &&
+              !["Class", "Roll", "Name", "FatherName", "Father Name","P_C NO","pcNO"].includes(k) &&
               !k.toLowerCase().includes("drawing")
           )
           .reduce(
@@ -202,6 +212,23 @@ app.get('/result', (req, res) => {
       ? "Third"
       : "Fail";
   });
+const terminalMap = {
+  "1st": data.first,
+  "2nd": data.second,
+  "3rd": data.third,
+  "annual": data.annual,
+};
+
+const selectedTermData = terminalMap[terminal];
+
+const resultAvailable = isResultAvailable(
+  selectedTermData,
+  visibleSubjects
+);
+
+if (!resultAvailable) {
+  return res.json({ error: "Result not available." });
+}
 
   res.json({
     schoolName: "STAR PUBLIC SCHOOL",
@@ -213,14 +240,18 @@ app.get('/result', (req, res) => {
         data.annual?.Name
     ),
     fatherName: safeValue(
-      data.first?.FatherName ||
-        data.second?.FatherName ||
-        data.third?.FatherName ||
-        data.annual?.FatherName
-    ),
+  data.first?.FatherName || data.first?.["Father Name"] ||
+    data.second?.FatherName || data.second?.["Father Name"] ||
+    data.third?.FatherName || data.third?.["Father Name"] ||
+    data.annual?.FatherName || data.annual?.["Father Name"]
+),
+
     class: safeValue(queryClass),
     roll: safeValue(roll),
     terminal,
+    session:
+  terminal === "Annual" ? "2025-26" : "",
+
     marks,
     totals,
     totalFullMarks,
@@ -293,6 +324,36 @@ app.get('/provisional', (req, res) => {
 
     existingPC = newPC; // use for response
   }
+const calculateDivision = (studentRow) => {
+  let total = 0;
+  let subjectCount = 0;
+  let hasIncomplete = false;
+
+  Object.keys(studentRow).forEach((key) => {
+    if (
+      ["Class","Roll","Name","Father Name","FatherName","P_C NO","P C NO","PC NO","Division","School Name","Year"].includes(key)
+    ) return;
+
+    const val = String(studentRow[key] || "").trim().toUpperCase();
+
+   
+
+    if (!isNaN(val)) {
+      total += Number(val);
+      subjectCount++;
+    }
+  });
+
+  if (hasIncomplete) return "INCOMPLETE";
+
+  const fullMarks = subjectCount * 100 || 1;
+  const percent = (total / fullMarks) * 100;
+
+  if (percent >= 60) return "First";
+  if (percent >= 45) return "Second";
+  if (percent >= 30) return "Third";
+  return "Fail";
+};
 
   // Response
   res.json({
@@ -301,12 +362,14 @@ app.get('/provisional', (req, res) => {
     schoolName: safeValue(student["School Name"] || "STAR PUBLIC SCHOOL, MATHIA"),
     class: safeValue(student["Class"]),
     rollNo: safeValue(student["Roll"]),
-    year: safeValue(student["Year"] || "Second Term Exam 2025"),
-    division: safeValue(student["Division"]),
+    year: safeValue(student["Year"] || "Second Term Exam 2025-26"),
+division: safeValue(student["Division"] || calculateDivision(student)),
     date: new Date().toLocaleDateString("en-GB"),
     pcNo: existingPC
   });
 });
+
+
 
 
 
