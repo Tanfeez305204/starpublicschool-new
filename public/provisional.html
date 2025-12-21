@@ -112,7 +112,7 @@ body{
 
 .cert{
   width:210mm;
-  height:148.5mm;
+  height:140mm;
   position:relative;
   display:none;
   background-image:url("content/boarderimg.png");
@@ -121,7 +121,6 @@ body{
   background-repeat:no-repeat;
   padding:90px 95px;
   box-sizing:border-box;
-  box-shadow:0 18px 45px rgba(0,0,0,.35);
 }
 
 /* During PDF capture: remove shadow to avoid layout overflow */
@@ -187,18 +186,18 @@ body{
 /* STAMP */
 .cert-stamp-box{
   position:absolute;
-  right:100px;
-  bottom:175px;
+  right:180px;
+  bottom:155px;
 }
 .cert-stamp-box img{
-  height:80px;
+  height:100px;
   opacity:0.85;
 }
 
 /* CERTIFICATE FOOTER (scoped) */
 .cert-footer{
   position:absolute;
-  bottom:62px;
+  bottom:65px;
   left:95px;
   right:95px;
   display:flex;
@@ -293,7 +292,7 @@ body{
   </div>
 
   <div class="cert-stamp-box">
-    <img src="content/stamp.jpeg">
+    <img src="content/stampcert.png">
   </div>
 
   <div class="cert-footer">
@@ -333,7 +332,10 @@ searchBtn.onclick=async()=>{
   const res=await fetch(`/provisional?class=${c}&roll=${r}`);
   const data=await res.json();
   if(data.error) return alert(data.error);
-
+  if (!data.division || data.division.toLowerCase() === "incomplete") {
+    alert("❌ Result is incomplete. Provisional Certificate cannot be generated.");
+    return;
+  }
   fillCertificate(data);
   document.querySelector('.search-card').style.display='none';
   certificate.style.display='block';
@@ -346,14 +348,16 @@ searchMoreBtn.onclick=()=>{
   document.querySelector('.search-card').style.display='block';
 }
 
-downloadBtn.onclick=()=>{
+downloadBtn.onclick = () => {
   (async function () {
     const el = document.getElementById('certificate');
     if (!el) return;
 
-    // Ensure fonts + images are ready before capture (prevents missing border/stamp etc.)
-    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
-    const imgs = Array.prototype.slice.call(el.querySelectorAll('img'));
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    } catch (e) {}
+
+    const imgs = Array.from(el.querySelectorAll('img'));
     await Promise.all(imgs.map(img => new Promise(resolve => {
       if (img.complete) return resolve();
       img.onload = resolve;
@@ -362,31 +366,32 @@ downloadBtn.onclick=()=>{
 
     el.classList.add('pdf-capture');
 
-    // Capture certificate as image
     const canvas = await html2canvas(el, {
       scale: 3,
       useCORS: true,
-      allowTaint: true,
-      backgroundColor: null,
-      scrollX: 0,
-      scrollY: 0
+      backgroundColor: null
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    const jspdf = window.jspdf.jsPDF;
 
-    // Put image on exactly ONE A5 landscape page
-    const jspdf = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
-    if (!jspdf) {
-      el.classList.remove('pdf-capture');
-      return alert("PDF library not loaded. Please refresh and try again.");
-    }
+    // ✅ A4 PORTRAIT
+    const pdf = new jspdf({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
 
-    const pdf = new jspdf({ orientation: 'landscape', unit: 'mm', format: 'a5' });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
+    const pageW = pdf.internal.pageSize.getWidth();   // 210mm
 
-    pdf.addImage(imgData, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
-    pdf.save('provisional.pdf');
+    // 🔹 Maintain aspect ratio
+    const imgW = pageW;
+    const imgH = (canvas.height * imgW) / canvas.width;
+
+    // ✅ TOP = 0 (NO MARGIN)
+    pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
+
+    pdf.save('provisional-certificate-A4.pdf');
 
     el.classList.remove('pdf-capture');
   })();
