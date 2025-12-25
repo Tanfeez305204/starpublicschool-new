@@ -527,25 +527,43 @@ app.get("/provisional.html", isAdminLoggedIn, (req, res) => {
 
 // Request OTP for password reset
 app.post("/admin/request-otp", async (req, res) => {
+  try {
     const { email } = req.body;
-    if (email.toLowerCase() !== admin.email.toLowerCase()) return res.json({ error: "Invalid email." });
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = Date.now() + 5 * 60 * 1000; // 5 minutes
-    otpStore[email] = { otp, expires };
-
-    try {
-        await transporter.sendMail({
-            from: '"Admin Reset" <t01auheed@gmail.com>',
-            to: email,
-            subject: "Your OTP for Admin Password Reset",
-            text: `Your OTP is ${otp}. It expires in 5 minutes.`,
-        });
-        res.json({ success: true, message: "OTP sent to your email." });
-    } catch (err) {
-        console.error(err);
-        res.json({ error: "Failed to send OTP. Check email credentials." });
+    // 🔒 Body validation
+    if (!email) {
+      return res.json({ error: "Email is required" });
     }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // 🔒 Admin email check
+    if (normalizedEmail !== admin.email.toLowerCase()) {
+      return res.json({ error: "Invalid email." });
+    }
+
+    // 🔐 Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    otpStore[normalizedEmail] = {
+      otp,
+      expires: Date.now() + 5 * 60 * 1000
+    };
+
+    // 📧 Send email
+    await transporter.sendMail({
+      from: '"Admin Reset" <t01auheed@gmail.com>',
+      to: normalizedEmail,
+      subject: "Admin Password Reset OTP",
+      text: `Your OTP is ${otp}. It is valid for 5 minutes.`
+    });
+
+    res.json({ success: true, message: "OTP sent successfully" });
+
+  } catch (err) {
+    console.error("REQUEST OTP ERROR:", err);
+    res.json({ error: "Failed to send OTP" });
+  }
 });
 
 // Reset password using OTP
