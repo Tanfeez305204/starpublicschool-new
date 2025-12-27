@@ -476,12 +476,20 @@ let admin = JSON.parse(fs.readFileSync(adminFile, "utf-8"));
 // ----------------- Nodemailer Setup -----------------
 
 const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port: 587,
-  secure: false, // TLS
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
   auth: {
-    user: "9ed570001@smtp-brevo.com",   // ✅ Brevo login
-    pass: "a3zgV8cP1RHyTGYM"             // ✅ Brevo SMTP key
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
+});
+
+transporter.verify((err) => {
+  if (err) {
+    console.error("SMTP VERIFY FAILED:", err);
+  } else {
+    console.log("SMTP READY ✅");
   }
 });
 
@@ -556,24 +564,18 @@ app.post("/admin/request-otp", async (req, res) => {
     otpStore[normalizedEmail] = { otp, expires };
 
     await transporter.sendMail({
-  from: '"Star Public School" <t01auheed@gmail.com>', // ✅ Brevo sender
+  from: '"Star Public School" <t01auheed@gmail.com>',
   to: normalizedEmail,
   subject: "Admin Password Reset OTP",
-
-  text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
-
+  text: `Your OTP is ${otp}. Valid for 5 minutes.`,
   html: `
-    <div style="font-family:Arial; padding:20px;">
-      <h2>Password Reset OTP</h2>
-      <p>Your OTP is:</p>
-      <h1 style="letter-spacing:3px;">${otp}</h1>
-      <p>This OTP is valid for <b>5 minutes</b>.</p>
-      <p style="color:gray;font-size:12px;">
-        If you did not request this, please ignore.
-      </p>
-    </div>
+    <h2>Password Reset OTP</h2>
+    <p>Your OTP is:</p>
+    <h1>${otp}</h1>
+    <p>Valid for 5 minutes.</p>
   `
 });
+
 
     console.log("OTP SENT:", otp); // debug
     res.json({ success: true, message: "OTP sent successfully" });
