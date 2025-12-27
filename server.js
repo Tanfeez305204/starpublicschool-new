@@ -472,15 +472,27 @@ if (!fs.existsSync(adminFile)) {
 let admin = JSON.parse(fs.readFileSync(adminFile, "utf-8"));
 
 // OTP store
-let otpStore = {};
 
 // ----------------- Nodemailer Setup -----------------
+
 const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: "t01auheed@gmail.com", // your Gmail
-        pass: "kkyt yulu dmas uxuf", // Gmail App Password
-    },
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  secure: false, // TLS
+  auth: {
+    user: "9ed570001@smtp-brevo.com",   // ✅ Brevo login
+    pass: "a3zgV8cP1RHyTGYM"             // ✅ Brevo SMTP key
+  }
+});
+
+// optional but recommended
+transporter.verify((err, success) => {
+
+  if (err) {
+    console.error("SMTP VERIFY FAILED:", err);
+  } else {
+    console.log("SMTP READY ✅");
+  }
 });
 
 // ----------------- Helper -----------------
@@ -526,62 +538,76 @@ app.get("/provisional.html", isAdminLoggedIn, (req, res) => {
 });
 
 // Request OTP for password reset
+
+const otpStore = {}; // server start me ek baar
+
 app.post("/admin/request-otp", async (req, res) => {
   try {
     const { email } = req.body;
+    const normalizedEmail = email.toLowerCase();
 
-    // 🔒 Body validation
-    if (!email) {
-      return res.json({ error: "Email is required" });
-    }
-
-    const normalizedEmail = email.toLowerCase().trim();
-
-    // 🔒 Admin email check
     if (normalizedEmail !== admin.email.toLowerCase()) {
       return res.json({ error: "Invalid email." });
     }
 
-    // 🔐 Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 5 * 60 * 1000;
 
-    otpStore[normalizedEmail] = {
-      otp,
-      expires: Date.now() + 5 * 60 * 1000
-    };
+    otpStore[normalizedEmail] = { otp, expires };
 
-    // 📧 Send email
     await transporter.sendMail({
-      from: '"Admin Reset" <t01auheed@gmail.com>',
-      to: normalizedEmail,
-      subject: "Admin Password Reset OTP",
-      text: `Your OTP is ${otp}. It is valid for 5 minutes.`
-    });
+  from: '"Star Public School" <t01auheed@gmail.com>', // ✅ Brevo sender
+  to: normalizedEmail,
+  subject: "Admin Password Reset OTP",
 
+  text: `Your OTP is ${otp}. It is valid for 5 minutes.`,
+
+  html: `
+    <div style="font-family:Arial; padding:20px;">
+      <h2>Password Reset OTP</h2>
+      <p>Your OTP is:</p>
+      <h1 style="letter-spacing:3px;">${otp}</h1>
+      <p>This OTP is valid for <b>5 minutes</b>.</p>
+      <p style="color:gray;font-size:12px;">
+        If you did not request this, please ignore.
+      </p>
+    </div>
+  `
+});
+
+    console.log("OTP SENT:", otp); // debug
     res.json({ success: true, message: "OTP sent successfully" });
 
   } catch (err) {
-    console.error("REQUEST OTP ERROR:", err);
-    res.json({ error: "Failed to send OTP" });
+    console.error("OTP SEND FAIL:", err);
+    res.status(500).json({ error: "Failed to send OTP" });
   }
 });
 
+
+
 // Reset password using OTP
 app.post("/admin/reset-password", async (req, res) => {
+  try {
     const { email, otp, newPassword } = req.body;
-    if (email.toLowerCase() !== admin.email.toLowerCase()) return res.json({ error: "Invalid email." });
+    const normalizedEmail = email.toLowerCase();
 
-    const record = otpStore[email];
-    if (!record) return res.json({ error: "OTP not requested." });
-    if (Date.now() > record.expires) return res.json({ error: "OTP expired." });
-    if (record.otp !== otp) return res.json({ error: "Invalid OTP." });
+    const record = otpStore[normalizedEmail];
+    if (!record) return res.json({ error: "OTP not requested" });
+    if (Date.now() > record.expires) return res.json({ error: "OTP expired" });
+    if (record.otp !== otp) return res.json({ error: "Invalid OTP" });
 
-    // Update password in memory and persist
     admin.passwordHash = await bcrypt.hash(newPassword, 10);
-    fs.writeFileSync(adminFile, JSON.stringify(admin, null, 2), "utf-8");
+    fs.writeFileSync(adminFile, JSON.stringify(admin, null, 2));
 
-    delete otpStore[email];
-    res.json({ success: true, message: "Password updated successfully." });
+    delete otpStore[normalizedEmail];
+
+    res.json({ success: true, message: "Password updated successfully" });
+
+  } catch (err) {
+    console.error("RESET ERROR:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 // Protected dashboard
