@@ -1,15 +1,20 @@
 
+require("dotenv").config();   // ✅ SABSE UPAR
+
 const fs = require("fs");
-const express = require('express');
-const xlsx = require('xlsx');
-const path = require('path');
-const cors = require('cors');
-const app = express();
+const express = require("express");
+const xlsx = require("xlsx");
+const path = require("path");
+const cors = require("cors");
 const bodyParser = require("body-parser");
 const session = require("express-session");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
+
+const app = express();
 const PORT = process.env.PORT || 3000;
+
+
  
 app.use(cors());
 app.use(express.static('public')); // frontend folder
@@ -586,6 +591,13 @@ app.post("/admin/request-otp", async (req, res) => {
   }
 });
 
+transporter.verify((err) => {
+  if (err) {
+    console.error("SMTP VERIFY FAILED:", err);
+  } else {
+    console.log("SMTP READY ✅");
+  }
+});
 
 
 // Reset password using OTP
