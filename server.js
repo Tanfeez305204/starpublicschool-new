@@ -14,6 +14,12 @@ const bcrypt = require("bcrypt");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const Mailjet = require("node-mailjet");
+
+const mailjet = Mailjet.apiConnect(
+  process.env.SMTP_USER,
+  process.env.SMTP_PASS
+);
 
  
 app.use(cors());
@@ -563,24 +569,38 @@ app.post("/admin/request-otp", async (req, res) => {
       return res.json({ error: "Invalid email." });
     }
 
+    // generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = Date.now() + 5 * 60 * 1000;
 
     otpStore[normalizedEmail] = { otp, expires };
 
-    await transporter.sendMail({
-  from: '"Star Public School" <t01auheed@gmail.com>',
-  to: normalizedEmail,
-  subject: "Admin Password Reset OTP",
-  text: `Your OTP is ${otp}. Valid for 5 minutes.`,
-  html: `
-    <h2>Password Reset OTP</h2>
-    <p>Your OTP is:</p>
-    <h1>${otp}</h1>
-    <p>Valid for 5 minutes.</p>
-  `
-});
-
+    // ✅ SEND OTP USING MAILJET API (NO SMTP)
+    await mailjet
+      .post("send", { version: "v3.1" })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: "t01auheed@gmail.com", // VERIFIED MAILJET EMAIL
+              Name: "Star Public School"
+            },
+            To: [
+              {
+                Email: normalizedEmail
+              }
+            ],
+            Subject: "Star Public School – Admin Verification Code",
+            TextPart: `Your OTP is ${otp}. Valid for 5 minutes.`,
+            HTMLPart: `
+              <h3>Star Public School</h3>
+              <p>Your admin verification code is:</p>
+              <h1>${otp}</h1>
+              <p>This code is valid for 5 minutes.</p>
+            `
+          }
+        ]
+      });
 
     console.log("OTP SENT:", otp); // debug
     res.json({ success: true, message: "OTP sent successfully" });
@@ -591,13 +611,6 @@ app.post("/admin/request-otp", async (req, res) => {
   }
 });
 
-transporter.verify((err) => {
-  if (err) {
-    console.error("SMTP VERIFY FAILED:", err);
-  } else {
-    console.log("SMTP READY ✅");
-  }
-});
 
 
 // Reset password using OTP
