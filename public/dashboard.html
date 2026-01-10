@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Student Dashboard</title>
+
+<style>
+*{box-sizing:border-box;font-family:Inter,Arial}
+body{margin:0;background:#f5f6f8}
+.app{display:flex;height:100vh}
+.sidebar{width:220px;background:#0f3d2e;color:#fff;padding:20px;display:flex;flex-direction:column}
+.menu a{display:block;padding:10px;margin-bottom:8px;color:#dfeee8;text-decoration:none;border-radius:6px;cursor:pointer}
+.menu a.active,.menu a:hover{background:#1f6b4e}
+.logout{margin-top:auto;color:#ffb3b3;cursor:pointer}
+.main{flex:1;padding:30px;overflow:auto}
+.card{background:#fff;border-radius:14px;padding:30px;max-width:900px;margin:auto;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.hidden{display:none}
+h3{text-align:center}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;margin-top:5px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.full{grid-column:span 2}
+.btn{padding:10px 18px;border-radius:8px;border:none;cursor:pointer}
+.submit{background:#0f3d2e;color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:10px;border-bottom:1px solid #ddd}
+th{background:#f0f0f0}
+.todo-item{display:flex;justify-content:space-between;margin-bottom:10px}
+#studentDetail table th {
+  width: 30%;
+  background: #f7f7f7;
+  text-align: left;
+}
+#studentDetail table td {
+  background: #fff;
+}
+
+</style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h2>Dashboard</h2>
+    <div class="menu">
+      <a class="active" onclick="showTab('addStudent',this)">Add Student</a>
+      <a onclick="showTab('viewStudents',this)">View Students</a>
+      <a onclick="showTab('addMarks',this)">Add Marks</a>
+      <a onclick="showTab('todo',this)">To-Do</a>
+    </div>
+    <a class="logout" onclick="logout()">Logout</a>
+  </aside>
+
+  <main class="main">
+
+<!-- ADD STUDENT -->
+<div id="addStudent" class="card">
+<h3>Add Student</h3>
+<div class="form">
+  <input id="roll" placeholder="Roll Number">
+  <input id="name" placeholder="Name">
+  <input id="fathername" placeholder="Father Name">
+  <input class="full" id="address" placeholder="Address">
+  <input id="phone" placeholder="Phone">
+  <input type="date" id="dob">
+  <select id="gender">
+    <option value="">Gender</option>
+    <option>Male</option>
+    <option>Female</option>
+  </select>
+  <select id="className">
+    <option value="">Class</option>
+     <option>Nursery-A</option>
+    <option>Nursery-B</option>
+     <option>Nursery-C</option>
+    <option>UKG-A</option>
+     <option>LKG-B</option>
+    <option>LKG-A</option>
+    <option>UKG-B</option>
+    <option>Class 1</option>
+     <option>Class 2</option>
+    <option>Class 3</option>
+     <option>Class 4</option>
+    <option>Class 5</option>
+     <option>Class 6</option>
+    <option>Class 7</option>
+     <option>Class 8</option>
+  </select>
+</div><br>
+<button class="btn submit" onclick="addStudent()">Submit</button>
+</div>
+
+<!-- VIEW STUDENTS -->
+<div id="viewStudents" class="card hidden">
+  <h3>View Students</h3>
+
+  <!-- FILTERS -->
+  <div class="form">
+    <input id="filterText" placeholder="Search by Roll or Name" onkeyup="filterStudents()">
+    <select id="filterClass" onchange="filterStudents()">
+      <option value="">All Classes</option>
+      <option>Nursery-A</option>
+    <option>Nursery-B</option>
+     <option>Nursery-C</option>
+    <option>UKG-A</option>
+     <option>LKG-B</option>
+    <option>LKG-A</option>
+    <option>UKG-B</option>
+    <option>Class 1</option>
+     <option>Class 2</option>
+    <option>Class 3</option>
+     <option>Class 4</option>
+    <option>Class 5</option>
+     <option>Class 6</option>
+    <option>Class 7</option>
+     <option>Class 8</option>
+    </select>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="padding-left:3px">Roll</th>
+        <th style="padding-left:70px">Name</th>
+        <th style="padding-left:140px">Class</th>
+        <th style="padding-left:170px">Action</th>
+
+      </tr>
+    </thead>
+    <tbody id="studentTable"></tbody>
+  </table>
+</div>
+
+<!-- ADD MARKS -->
+<div id="addMarks" class="card hidden">
+<h3>Add Marks</h3>
+<div class="form">
+  <input id="rollInput" placeholder="Roll Number">
+  <select id="classSelect">
+    <option value="">Class</option>
+    <option>Nursery-A</option>
+    <option>Nursery-B</option>
+     <option>Nursery-C</option>
+    <option>UKG-A</option>
+     <option>LKG-B</option>
+    <option>LKG-A</option>
+    <option>UKG-B</option>
+    <option>Class 1</option>
+     <option>Class 2</option>
+    <option>Class 3</option>
+     <option>Class 4</option>
+    <option>Class 5</option>
+     <option>Class 6</option>
+    <option>Class 7</option>
+     <option>Class 8</option>
+  </select>
+</div><br>
+<div id="subjectMarks" class="form full"></div><br>
+<button class="btn submit" onclick="saveMarks()">Save Marks</button>
+</div>
+
+<!-- TODO -->
+<div id="todo" class="card hidden">
+<h3>To-Do</h3>
+<input id="taskInput" placeholder="New task"><br><br>
+<button class="btn submit" onclick="addTask()">Add</button>
+<div id="taskList"></div>
+</div>
+<!-- STUDENT DETAIL PAGE -->
+<div id="studentDetail" class="card hidden">
+  <h3>Student Details</h3>
+
+  <table>
+    <tbody id="studentDetailTable"></tbody>
+  </table>
+
+  <br>
+
+  <div>
+    <button
+      class="btn submit"
+      onclick="showTab('viewStudents', document.querySelector('.menu a:nth-child(2)'))"
+      style="background:#6c757d"
+    >
+      ⬅ Back to Students
+    </button>
+
+    <button
+      onclick="updateMarks()"
+      style="margin-left:12px;padding:10px 18px;background:#0f3d2e;color:#fff;border:none;border-radius:8px;cursor:pointer"
+    >
+      ✏ Update Marks
+    </button>
+
+    <button
+      onclick="updateDetails()"
+      style="margin-left:12px;padding:10px 18px;background:#007bff;color:#fff;border:none;border-radius:8px;cursor:pointer"
+    >
+      ✏ Update Details
+    </button>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+  let selectedStudentIndex = null
+  let editStudentIndex = null
+  let editMarksIndex = null
+
+
+const FINAL_SUBJECTS = [
+  "Hindi",
+  "English",
+  "Math",
+  "Science",
+  "S.S.T",
+  "GK",
+  "Sanskrit / Urdu",
+  "Drawing",
+  "Computer / Table"
+];
+const LOWER_CLASS_SUBJECTS = [
+  "Hindi",
+  "English",
+  "Math",
+  "GK",
+  "Drawing",
+  "Computer / Table"
+];
+const subjectsByClass = {
+  "Nursery-A": LOWER_CLASS_SUBJECTS,
+  "Nursery-B": LOWER_CLASS_SUBJECTS,
+  "Nursery-C": LOWER_CLASS_SUBJECTS,
+
+  "LKG-A": LOWER_CLASS_SUBJECTS,
+  "LKG-B": LOWER_CLASS_SUBJECTS,
+
+  "UKG-A": LOWER_CLASS_SUBJECTS,
+  "UKG-B": LOWER_CLASS_SUBJECTS,
+
+  "Class 1": FINAL_SUBJECTS,
+  "Class 2": FINAL_SUBJECTS,
+  "Class 3": FINAL_SUBJECTS,
+  "Class 4": FINAL_SUBJECTS,
+  "Class 5": FINAL_SUBJECTS,
+  "Class 6": FINAL_SUBJECTS,
+  "Class 7": FINAL_SUBJECTS,
+  "Class 8": FINAL_SUBJECTS
+};
+
+
+let students=JSON.parse(localStorage.getItem("students"))||[]
+
+document.getElementById("classSelect").addEventListener("change", function () {
+  subjectMarks.innerHTML = ""
+
+  const rollNo = rollInput.value.trim()
+  const cls = this.value
+
+  if (!rollNo || !cls) return
+
+  const student = students.find(
+    s => s.roll === rollNo && s.className === cls
+  )
+
+  if (!student) {
+    alert("Student not found")
+    this.value = ""
+    return
+  }
+
+  // 🚫 MARKS ALREADY ADDED CHECK
+  if (student.marks && Object.keys(student.marks).length > 0) {
+    alert("Marks already added for this student")
+    this.value = ""
+    return
+  }
+
+  // ✅ ALLOW MARKS ENTRY
+  ;(subjectsByClass[cls] || []).forEach(subject => {
+    subjectMarks.innerHTML += `
+      <input type="number" min="0" max="100" placeholder="${subject}" data-subject="${subject}">
+    `
+  })
+})
+
+function showTab(id,el){
+ document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"))
+ document.getElementById(id).classList.remove("hidden")
+ document.querySelectorAll(".menu a").forEach(a=>a.classList.remove("active"))
+ el.classList.add("active")
+ if(id==="viewStudents")renderStudents()
+}
+
+function addStudent(){
+  const student = {
+    roll: document.getElementById("roll").value.trim(),
+    name: document.getElementById("name").value.trim(),
+    fathername: document.getElementById("fathername").value.trim(),
+    address: document.getElementById("address").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    dob: document.getElementById("dob").value,
+    gender: document.getElementById("gender").value,
+    className: document.getElementById("className").value,
+    marks: {}
+  }
+
+  if(!student.roll || !student.name || !student.className){
+    alert("Roll, Name & Class required")
+    return
+  }
+
+  // ✅ UPDATE MODE
+  if(editStudentIndex !== null){
+    students[editStudentIndex] = {
+      ...students[editStudentIndex],
+      ...student,
+      marks: students[editStudentIndex].marks // marks safe
+    }
+
+    localStorage.setItem("students", JSON.stringify(students))
+    editStudentIndex = null
+
+    alert("Student Details Updated Successfully")
+
+    document.querySelectorAll("#addStudent input, #addStudent select")
+      .forEach(el => el.value = "")
+
+    showTab("viewStudents", document.querySelector(".menu a:nth-child(2)"))
+    return
+  }
+
+  // ✅ ADD MODE (normal)
+  const exists = students.some(
+    s => s.roll === student.roll && s.className === student.className
+  )
+
+  if(exists){
+    alert("Student with this Roll already exists")
+    return
+  }
+
+  students.push(student)
+  localStorage.setItem("students", JSON.stringify(students))
+
+  alert("Student Added Successfully")
+
+  document.querySelectorAll("#addStudent input, #addStudent select")
+    .forEach(el => el.value = "")
+}
+
+
+function renderStudents(list = students){
+  const table = document.getElementById("studentTable")
+  table.innerHTML = ""
+
+  if(list.length === 0){
+    table.innerHTML = `<tr><td colspan="4">No students found</td></tr>`
+    return
+  }
+
+  list.forEach((s,i)=>{
+    table.innerHTML += `
+      <tr>
+       <td style="padding-left:30px">${s.roll}</td>
+       <td style="padding-left:90px">${s.name}</td>
+       <td style="padding-left:150px">${s.className}</td>
+
+        <td>
+          <button onclick="viewStudent(${i})" style="margin-left:150px;padding:6px 14px;background:#0f3d2e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">View</button>
+          <button onclick="removeStudent(${i})" style="margin-left:6px;padding:6px 14px;background:red;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">Remove</button>
+          </button>
+        </td>
+      </tr>
+    `
+  })
+}
+function filterStudents(){
+  const text = document.getElementById("filterText").value.toLowerCase()
+  const cls = document.getElementById("filterClass").value
+
+  const filtered = students.filter(s => {
+    const matchText =
+      s.roll.toLowerCase().includes(text) ||
+      s.name.toLowerCase().includes(text)
+
+    const matchClass = cls ? s.className === cls : true
+
+    return matchText && matchClass
+  })
+
+  renderStudents(filtered)
+}
+function removeStudent(index){
+  if(!confirm("Are you sure you want to remove this student?")) return
+  students.splice(index, 1)
+  localStorage.setItem("students", JSON.stringify(students))
+  renderStudents()
+}
+
+function viewStudent(i){
+  selectedStudentIndex = i
+  const s = students[i]
+  const table = document.getElementById("studentDetailTable")
+
+  let marksHtml = "<tr><td colspan='2'>No marks added</td></tr>"
+  if (Object.keys(s.marks).length) {
+    marksHtml = Object.entries(s.marks)
+      .map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
+      .join("")
+  }
+
+  table.innerHTML = `
+    <tr><th>Roll No</th><td>${s.roll}</td></tr>
+    <tr><th>Name</th><td>${s.name}</td></tr>
+    <tr><th>Father Name</th><td>${s.fathername}</td></tr>
+    <tr><th>Mobile</th><td>${s.phone}</td></tr>
+    <tr><th>Address</th><td>${s.address}</td></tr>
+    <tr><th>Class</th><td>${s.className}</td></tr>
+
+    <tr><th colspan="2" style="background:#f0f0f0">Marks</th></tr>
+    ${marksHtml}
+  `
+
+  // hide all cards
+  document.querySelectorAll(".card").forEach(c => c.classList.add("hidden"))
+  document.getElementById("studentDetail").classList.remove("hidden")
+}
+
+function updateMarks(){
+  const s = students[selectedStudentIndex]
+  editMarksIndex = selectedStudentIndex   // 👈 UPDATE MODE
+
+  rollInput.value = s.roll
+  classSelect.value = s.className
+
+  showTab("addMarks", document.querySelector(".menu a:nth-child(3)"))
+
+  // subjects load karo
+  subjectMarks.innerHTML = ""
+  ;(subjectsByClass[s.className] || []).forEach(sub => {
+    subjectMarks.innerHTML += `
+      <input type="number" min="0" max="100"
+        placeholder="${sub}"
+        data-subject="${sub}"
+        value="${s.marks[sub] ?? ""}">
+    `
+  })
+}
+
+function updateDetails(){
+  const s = students[selectedStudentIndex]
+  editStudentIndex = selectedStudentIndex   // 👈 IMPORTANT
+
+  document.getElementById("roll").value = s.roll
+  document.getElementById("name").value = s.name
+  document.getElementById("fathername").value = s.fathername
+  document.getElementById("address").value = s.address
+  document.getElementById("phone").value = s.phone
+  document.getElementById("dob").value = s.dob
+  document.getElementById("gender").value = s.gender
+  document.getElementById("className").value = s.className
+
+  showTab("addStudent", document.querySelector(".menu a:nth-child(1)"))
+}
+
+function saveMarks(){
+ const rollNo=rollInput.value.trim()
+ const cls=classSelect.value
+ if(!rollNo||!cls){alert("Roll & Class required");return}
+ const s=students.find(x=>x.roll===rollNo&&x.className===cls)
+ if(!s){alert("Student not found");return}
+ s.marks={}
+ document.querySelectorAll("#subjectMarks input").forEach(i=>{
+  s.marks[i.dataset.subject]=Number(i.value)||0
+ })
+ localStorage.setItem("students",JSON.stringify(students))
+ alert("Marks Saved")
+ rollInput.value="";classSelect.value="";subjectMarks.innerHTML=""
+}
+
+function addTask(){
+ if(!taskInput.value)return
+ taskList.innerHTML+=`<div class="todo-item">${taskInput.value}<button onclick="this.parentElement.remove()">❌</button></div>`
+ taskInput.value=""
+}
+
+function logout(){localStorage.clear();location.reload()}
+</script>
+</body>
+</html>
