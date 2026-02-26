@@ -326,9 +326,23 @@ footer {
        Mobile Styles
     -------------------- */
     @media screen and (max-width: 768px) {
+      /* keep original card size and scale down so it looks identical to desktop
+         while still fitting on narrow screens. horizontal scrollable wrapper
+         lets users pan if needed. */
       .result-card {
         padding: 15px;
         min-height: auto;
+        /* force desktop width and scale for mobile */
+        width: 794px;                /* fixed A4 width */
+        max-width: none;            /* override previous 100% */
+        transform: scale(0.75);      /* shrink to 75% of desktop size */
+        transform-origin: top center;
+      }
+
+      /* wrap card in a scrollable container to avoid clipping */
+      #resultDisplay {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       .school-header {
@@ -660,6 +674,163 @@ footer {
       margin-bottom: 2px !important;
       opacity: 0.92 !important;
     }
+
+    /* ----------------------------------------------------------
+       Responsive + mobile PDF stability fixes
+       ---------------------------------------------------------- */
+    /* keep full width by default but on narrow viewports the earlier
+       media query scales the card; we don't need an extra width override. */
+    #resultDisplay {
+      margin-top: 14px;
+    }
+
+    @media screen and (max-width: 768px) {
+      /* ensure scroll container remains active on mobile */
+      #resultDisplay {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
+
+    .table-scroll table {
+      margin: 0;
+    }
+
+    .pdf-export-host {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .result-card.pdf-export-mode {
+      width: 794px !important;
+      max-width: 794px !important;
+      min-height: 1123px !important;
+      padding: 30px !important;
+      margin: 0 !important;
+      border-radius: 12px !important;
+      box-shadow: none !important;
+      overflow: hidden !important;
+      transform: none !important;
+    }
+
+    .result-card.pdf-export-mode .school-header {
+      flex-direction: row !important;
+      align-items: center !important;
+    }
+
+    .result-card.pdf-export-mode .school-header img {
+      height: 86px !important;
+      width: 86px !important;
+      margin-bottom: 0 !important;
+    }
+
+    .result-card.pdf-export-mode .table-scroll {
+      overflow: visible !important;
+      margin: 10px 0 !important;
+    }
+
+    .result-card.pdf-export-mode .details-table {
+      min-width: 100% !important;
+    }
+
+    .result-card.pdf-export-mode .marks-table {
+      min-width: 100% !important;
+    }
+
+    @media screen and (max-width: 768px) {
+      .result-main {
+        width: 94% !important;
+        padding-top: 92px !important;
+      }
+
+      .result-section {
+        padding: 14px 10px !important;
+        border-radius: 14px !important;
+      }
+
+      .result-card {
+        min-height: auto !important;
+        padding: 14px 10px !important;
+        border-radius: 10px !important;
+      }
+
+      .result-card::after {
+        font-size: 56px !important;
+      }
+
+      .school-header {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+
+      .school-header img {
+        height: 68px !important;
+        width: 68px !important;
+        margin-bottom: 0 !important;
+      }
+
+      .school-info h2 {
+        font-size: 22px !important;
+        line-height: 1.2 !important;
+      }
+
+      .school-info h3 {
+        font-size: 14px !important;
+      }
+
+      .table-scroll .details-table {
+        min-width: 0;
+      }
+
+      .table-scroll .marks-table {
+        min-width: 0;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      .table-scroll .marks-table th,
+      .table-scroll .marks-table td {
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .table-scroll .marks-table th:first-child,
+      .table-scroll .marks-table td:first-child {
+        width: 30%;
+      }
+
+      .marks-table th,
+      .marks-table td,
+      .details-table td {
+        font-size: 12px !important;
+        padding: 7px 8px !important;
+      }
+
+      .sign-stamp-wrapper {
+        position: relative !important;
+        right: auto !important;
+        bottom: auto !important;
+        margin: 14px auto 0 !important;
+      }
+
+      #downloadBtn {
+        max-width: 100% !important;
+      }
+    }
   </style>
 </head>
 
@@ -861,119 +1032,126 @@ footer {
       const showSecond = ["2nd", "3rd", "annual"].includes(terminal);
       const showThird = ["3rd", "annual"].includes(terminal);
       const showAnnual = ["annual"].includes(terminal);
+      const showMark = (val) => (val === undefined || val === null ? "" : val);
+      const termColumns = [
+        {
+          key: "firstTerm",
+          title: "First Term<br>Marks",
+          short: "First Term",
+          show: showFirst,
+          total: firstTermTotal,
+          percentage: data.percentageFirst || "",
+          division: data.division?.first || "",
+        },
+        {
+          key: "secondTerm",
+          title: "Second Term<br>Marks",
+          short: "Second Term",
+          show: showSecond,
+          total: secondTermTotal,
+          percentage: data.percentageSecond || "",
+          division: data.division?.second || "",
+        },
+        {
+          key: "thirdTerm",
+          title: "Third Term<br>Marks",
+          short: "Third Term",
+          show: showThird,
+          total: thirdTermTotal,
+          percentage: data.percentageThird || "",
+          division: data.division?.third || "",
+        },
+        {
+          key: "AnnTerm",
+          title: "Annual Term<br>Marks",
+          short: "Annual Term",
+          show: showAnnual,
+          total: annualTermTotal,
+          percentage: data.percentageAnnual || "",
+          division: data.division?.annual || "",
+        },
+      ].filter((col) => col.show);
 
       display.innerHTML = `
         <div class="result-card" id="resultCard">
           <div class="school-header">
             <img src="content/logo.jpeg" alt="School Logo" />
             <div class="school-info">
-<h2 style="
-  font-family: 'Cinzel Decorative', serif;
-  font-size: 30px;
-  font-weight: 700;
-  color: #1a237e;
-  letter-spacing: 1px;
-  margin: 10px 0 15px 0;
-">
-  ${data.schoolName}
-</h2>
-
-
+<h2>${data.schoolName}</h2>
 <p class="school-address">${data.schoolAddress}</p>
 <h3>${termTitle} Examination Result - ${resultYear}</h3>
             </div>
           </div>
           <hr />
 
-          <table class="details-table">
-            <tr><td>Name of Student:</td><td>${data.studentName}</td></tr>
-            <tr><td>Father's Name:</td><td>${data.fatherName}</td></tr>
-            <tr><td>Class:</td><td>${data.class}</td></tr>
-            <tr><td>Roll Number:</td><td>${data.roll}</td></tr>
-          </table>
+          <div class="table-scroll">
+            <table class="details-table">
+              <tr><td>Name of Student:</td><td>${data.studentName}</td></tr>
+              <tr><td>Father's Name:</td><td>${data.fatherName}</td></tr>
+              <tr><td>Class:</td><td>${data.class}</td></tr>
+              <tr><td>Roll Number:</td><td>${data.roll}</td></tr>
+            </table>
+          </div>
 
-          <table class="marks-table">
-            <thead>
-              <tr>
-                <th>Subject Details</th>
-                <th>Full Marks</th>
-                <th>Pass Marks</th>
-                <th>First Term<br>Marks</th>
-                <th>Second Term<br>Marks</th>
-                <th>Third Term<br>Marks</th>
-                <th>Annual Term<br>Marks</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${data.marks.map(m => `
+          <div class="table-scroll">
+            <table class="marks-table">
+              <thead>
                 <tr>
-                  <td>${m.subject.toLowerCase() === "sanskrit" ? "Sansk./Urdu" : m.subject}</td>
-                  <td>${m.fullMarks}</td>
-                  <td>${m.passMarks}</td>
-                  <td>${showFirst ? (m.firstTerm || "") : ""}</td>
-                  <td>${showSecond ? (m.secondTerm || "") : ""}</td>
-                  <td>${showThird ? (m.thirdTerm || "") : ""}</td>
-                  <td>${showAnnual ? (m.AnnTerm || "") : ""}</td>
-                </tr>`).join("")}
+                  <th>Subject Details</th>
+                  <th>Full Marks</th>
+                  <th>Pass Marks</th>
+                  ${termColumns.map((col) => `<th>${col.title}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                ${data.marks.map(m => `
+                  <tr>
+                    <td>${m.subject.toLowerCase() === "sanskrit" ? "Sansk./Urdu" : m.subject}</td>
+                    <td>${m.fullMarks}</td>
+                    <td>${m.passMarks}</td>
+                    ${termColumns.map((col) => `<td>${showMark(m[col.key])}</td>`).join("")}
+                  </tr>`).join("")}
 
-              <tr class="total-row">
-                <td>Total</td>
-                <td>${data.totalFullMarks}</td>
-<td><strong>${
-  data.marks.reduce((sum, m) => sum + (Number(m.passMarks) || 0), 0)
-}</strong></td>
-                <td>${showFirst ? firstTermTotal : ""}</td>
-                <td>${showSecond ? secondTermTotal : ""}</td>
-                <td>${showThird ? thirdTermTotal : ""}</td>
-                <td>${showAnnual ? annualTermTotal : ""}</td>
-              </tr>
-            </tbody>
-          </table>
+                <tr class="total-row">
+                  <td>Total</td>
+                  <td>${data.totalFullMarks}</td>
+  <td><strong>${
+    data.marks.reduce((sum, m) => sum + (Number(m.passMarks) || 0), 0)
+  }</strong></td>
+                  ${termColumns.map((col) => `<td>${col.total}</td>`).join("")}
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <table class="marks-table">
-            <thead>
-              <tr>
-                <th></th>
-                <th>First Term</th>
-                <th>Second Term</th>
-                <th>Third Term</th>
-                <th>Annual Term</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Total Marks</strong></td>
-                <td>${showFirst ? data.totalFullMarks : ""}</td>
-                <td>${showSecond ? data.totalFullMarks : ""}</td>
-                <td>${showThird ? data.totalFullMarks : ""}</td>
-                <td>${showAnnual ? data.totalFullMarks : ""}</td>
-              </tr>
-              <tr>
-                <td><strong>Marks Obtained</strong></td>
-                <td>${showFirst ? firstTermTotal : ""}</td>
-                <td>${showSecond ? secondTermTotal : ""}</td>
-                <td>${showThird ? thirdTermTotal : ""}</td>
-                <td>${showAnnual ? annualTermTotal : ""}</td>
-              </tr>
-             <tr>
-  <td><strong>Percentage</strong></td>
-  <td>${showFirst ? data.percentageFirst || "" : ""}</td>
-  <td>${showSecond ? data.percentageSecond || "" : ""}</td>
-  <td>${showThird ? data.percentageThird || "" : ""}</td>
-  <td>${showAnnual ? data.percentageAnnual || "" : ""}</td>
-
-</tr>
-
-              <tr>
-                <td><strong>Division</strong></td>
-                <td>${showFirst ? data.division.first : ""}</td>
-                <td>${showSecond ? data.division.second : ""}</td>
-                <td>${showThird ? data.division.third : ""}</td>
-                <td>${showAnnual ? data.division.annual : ""}</td>
-              </tr>
-              
-            </tbody>
-          </table>
+          <div class="table-scroll">
+            <table class="marks-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  ${termColumns.map((col) => `<th>${col.short}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Total Marks</strong></td>
+                  ${termColumns.map(() => `<td>${data.totalFullMarks}</td>`).join("")}
+                </tr>
+                <tr>
+                  <td><strong>Marks Obtained</strong></td>
+                  ${termColumns.map((col) => `<td>${col.total}</td>`).join("")}
+                </tr>
+                <tr>
+                  <td><strong>Percentage</strong></td>
+                  ${termColumns.map((col) => `<td>${col.percentage}</td>`).join("")}
+                </tr>
+                <tr>
+                  <td><strong>Division</strong></td>
+                  ${termColumns.map((col) => `<td>${col.division}</td>`).join("")}
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <div class="marksheet-bulletin">
   <h3>Important Information</h3>
   <ul>
@@ -1010,36 +1188,50 @@ footer {
 
 <script>
   async function downloadPDF() {
-  const card = document.getElementById("resultCard");
-  if (!card) return alert("Please generate the result first!");
+    const card = document.getElementById("resultCard");
+    if (!card) return alert("Please generate the result first!");
 
-  // High resolution canvas
-  const canvas = await html2canvas(card, { scale: 8, useCORS: true });
-  const imgData = canvas.toDataURL("image/png");
+    const host = document.createElement("div");
+    host.className = "pdf-export-host";
+    const clone = card.cloneNode(true);
+    clone.classList.add("pdf-export-mode");
+    host.appendChild(clone);
+    document.body.appendChild(host);
 
-  const pageWidth = 595;  // A4 width in points
-  const pageHeight = 842; // A4 height in points
+    try {
+      const canvas = await html2canvas(clone, {
+        scale: 2.5,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        windowWidth: clone.scrollWidth,
+        windowHeight: clone.scrollHeight
+      });
 
-  // Calculate height to maintain aspect ratio
-  const imgWidth = canvas.width;
-  const imgHeight = canvas.height;
-  const ratio = imgHeight / imgWidth;
-  const pdfHeight = pageWidth * ratio;
+      const imgData = canvas.toDataURL("image/png");
+      const pageWidth = 595;
+      const pageHeight = 842;
 
-  const pdfDoc = {
-    pageSize: 'A4',
-    pageMargins: [0, 0, 0, 0],  // no extra margins
-    content: [
-      {
-        image: imgData,
-        width: pageWidth,
-        height: pdfHeight > pageHeight ? pageHeight : pdfHeight
-      }
-    ]
-  };
+      const pdfDoc = {
+        pageSize: "A4",
+        pageMargins: [12, 12, 12, 12],
+        content: [
+          {
+            image: imgData,
+            fit: [pageWidth - 24, pageHeight - 24],
+            alignment: "center"
+          }
+        ]
+      };
 
-  pdfMake.createPdf(pdfDoc).download(`student_result.pdf`);
-}
+      pdfMake.createPdf(pdfDoc).download("student_result.pdf");
+    } catch (err) {
+      console.error(err);
+      alert("PDF download failed. Please try again.");
+    } finally {
+      document.body.removeChild(host);
+    }
+  }
 
 </script>
 
