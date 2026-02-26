@@ -828,11 +828,33 @@ footer {
   terminal === "annual" ? "2025–26" : new Date().getFullYear();
 
 
-      // Total per term
-      const firstTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.firstTerm) || 0), 0);
-      const secondTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.secondTerm) || 0), 0);
-      const thirdTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.thirdTerm) || 0), 0);
-      const annualTermTotal = data.marks.reduce((sum, m) => sum + (Number(m.AnnTerm) || 0), 0);
+      // Total per term: use backend numeric totals (marks cells may be grades like A/B/C)
+      const toSafeNumber = (val) => {
+        const num = Number(val);
+        return Number.isFinite(num) ? num : 0;
+      };
+      const sumNumericMarks = (key) =>
+        (data.marks || []).reduce((sum, m) => {
+          const num = Number(m[key]);
+          return Number.isFinite(num) ? sum + num : sum;
+        }, 0);
+
+      const firstTermTotal =
+        data.totals && data.totals.first !== undefined
+          ? toSafeNumber(data.totals.first)
+          : sumNumericMarks("firstTerm");
+      const secondTermTotal =
+        data.totals && data.totals.second !== undefined
+          ? toSafeNumber(data.totals.second)
+          : sumNumericMarks("secondTerm");
+      const thirdTermTotal =
+        data.totals && data.totals.third !== undefined
+          ? toSafeNumber(data.totals.third)
+          : sumNumericMarks("thirdTerm");
+      const annualTermTotal =
+        data.totals && data.totals.annual !== undefined
+          ? toSafeNumber(data.totals.annual)
+          : sumNumericMarks("AnnTerm");
 
       // Column visibility
       const showFirst = ["1st", "2nd", "3rd", "annual"].includes(terminal);

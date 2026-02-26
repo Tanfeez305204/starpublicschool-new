@@ -1,5 +1,5 @@
-
-require("dotenv").config();   // ✅ SABSE UPAR
+﻿
+require("dotenv").config();   // âœ… SABSE UPAR
 
 const fs = require("fs");
 const express = require("express");
@@ -40,6 +40,8 @@ const safeValue = (val, fallback = "") =>
   val === undefined || val === null || String(val).trim() === "" ? fallback : String(val).trim();
 
 const isNumeric = (val) => !isNaN(parseFloat(val)) && isFinite(val);
+
+
 const calculatePercentageAndDivision = (
   studentRow,
   subjects,
@@ -144,7 +146,7 @@ app.get('/result', (req, res) => {
   ];
   const isLowerClass = lowerClasses.includes(queryClass);
 
-  // ✅ Filter Science/SST for lower class
+  // âœ… Filter Science/SST for lower class
   const visibleSubjects = subjects.filter((sub) => {
     const name = sub.trim().toUpperCase();
     if (isLowerClass && (name.includes("SCIENCE") || name.includes("S.S.T")))
@@ -152,27 +154,22 @@ app.get('/result', (req, res) => {
     return true;
   });
 
-  const marks = visibleSubjects.map((sub) => {
+  const marks = visibleSubjects.filter(sub => {
+    // ðŸ”´ COMPLETELY IGNORE DRAWING
+    const name = sub.trim().toUpperCase();
+    return !name.includes("DRAWING");
+  }).map((sub) => {
     const normalizedSub = sub.trim().toUpperCase();
-    const isDrawing = normalizedSub.includes("DRAWING");
 
     let fullMarks = 100;
     let passMarks = 30;
 
-    // ✅ Drawing → grade only
-    if (isDrawing) {
-      fullMarks = "Grade";
-      passMarks = "-";
-    }
-
     const getVal = (termData) => {
-      if (!termData) return "AB";
+      if (!termData) return "";
       const val = termData[sub];
-      if (val === undefined || val === null || val==="AB" || String(val).trim() === "")
-        return "AB";
-      const v = String(val).trim();
-      if (["-", "_"].includes(v)) return "NA";
-      return isNumeric(v) ? parseFloat(v) : v;
+      if (val === undefined || val === null) return "";
+      if (typeof val === "string") return val.trim();
+      return val;
     };
 
     return {
@@ -202,21 +199,23 @@ const isResultAvailable = (termData, visibleSubjects) => {
   });
 };
 
-  // ✅ Total Calculation — exclude Drawing
-  const calcTotal = (sheetData) =>
-    sheetData
-      ? Object.keys(sheetData)
-          .filter(
-            (k) =>
-              !["Class", "Roll", "Name", "FatherName", "Father Name","P_C NO","pcNO"].includes(k) &&
-              !k.toLowerCase().includes("drawing")
-          )
-          .reduce(
-            (sum, k) =>
-              sum + (isNumeric(sheetData[k]) ? parseFloat(sheetData[k]) : 0),
-            0
-          )
-      : 0;
+  // âœ… Total Calculation â€” exclude Drawing (count only numeric values)
+  const calcTotal = (sheetData) => {
+    if (!sheetData) return 0;
+    return Object.keys(sheetData)
+      .filter(
+        (k) =>
+          !["Class", "Roll", "Name", "FatherName", "Father Name","P_C NO","pcNO"].includes(k) &&
+          !k.toLowerCase().includes("drawing")
+      )
+      .reduce(
+        (sum, k) => {
+          const val = sheetData[k];
+          return sum + (isNumeric(val) ? parseFloat(val) : 0);
+        },
+        0
+      );
+  };
 
   const totals = {
     first: calcTotal(data.first),
@@ -225,7 +224,7 @@ const isResultAvailable = (termData, visibleSubjects) => {
     annual: calcTotal(data.annual),
   };
 
-  // ✅ Total full marks calculation
+  // âœ… Total full marks calculation
   const totalFullMarks = subjects.filter(sub => {
     const name = sub.trim().toUpperCase();
     if (name.includes("DRAWING")) return false;
@@ -233,16 +232,34 @@ const isResultAvailable = (termData, visibleSubjects) => {
     return true;
   }).length * 100;
 
-  // ✅ Percentage logic
+  // âœ… Percentage logic
+  // For classes 1-8: obtained / numSubjects * 100 (where numSubjects = 8 typically)
+  const isClass1To8 = /^CLASS-[1-8]$/i.test(queryClass) || /^[1-8]$/i.test(queryClass);
+  const numValidSubjects = subjects.filter(sub => {
+    const name = sub.trim().toUpperCase();
+    if (name.includes("DRAWING")) return false;
+    if (isLowerClass && (name.includes("SCIENCE") || name.includes("S.S.T"))) return false;
+    return true;
+  }).length;
+  
   const termKeys = ["first", "second", "third", "annual"];
   const percentages = {};
   termKeys.forEach((term) => {
     const totalObtained = totals[term] || 0;
-    const totalFull = totalFullMarks || 1;
-    percentages[term] = ((totalObtained / totalFull) * 100).toFixed(2);
+    let percentage;
+    
+    if (isClass1To8 && numValidSubjects > 0) {
+      // For class 1-8: obtained / numSubjects * 100
+      percentage = ((totalObtained / numValidSubjects)).toFixed(2);
+    } else {
+      // For other classes: standard calculation
+      const totalFull = totalFullMarks || 1;
+      percentage = ((totalObtained / totalFull) * 100).toFixed(2);
+    }
+    percentages[term] = percentage;
   });
 
-  // ✅ Division
+  // âœ… Division
   const division = {};
   termKeys.forEach((k) => {
     const termData = data[k];
@@ -362,7 +379,7 @@ app.get('/provisional', (req, res) => {
 
   if (!student) return res.json({ error: "Student not found." });
 
-  // 🔹 PC number logic
+  // ðŸ”¹ PC number logic
   // Check if Excel already has a PC number
   let existingPC = student["P_C NO"] || student["P C NO"] || student["PC NO"];
   if (!existingPC || existingPC.trim() === "") {
@@ -418,7 +435,16 @@ app.get('/provisional', (req, res) => {
   });
 
   const totalFullMarks = validSubjects.length * 100 || 1;
-  const percentageAnnual = ((totalObtained / totalFullMarks) * 100).toFixed(2);
+  
+  // âœ… For class 1-8: obtained / numSubjects * 100
+  const isClass1To8 = /^CLASS-[1-8]$/i.test(queryClass) || /^[1-8]$/i.test(queryClass);
+  let percentageAnnual;
+  
+  if (isClass1To8 && validSubjects.length > 0) {
+    percentageAnnual = ((totalObtained / validSubjects.length)).toFixed(2);
+  } else {
+    percentageAnnual = ((totalObtained / totalFullMarks) * 100).toFixed(2);
+  }
 
   let division;
   if (hasIncomplete) division = "INCOMPLETE";
@@ -500,7 +526,7 @@ transporter.verify((err) => {
   if (err) {
     console.error("SMTP VERIFY FAILED:", err);
   } else {
-    console.log("SMTP READY ✅");
+    console.log("SMTP READY âœ…");
   }
 });
 
@@ -510,7 +536,7 @@ transporter.verify((err, success) => {
   if (err) {
     console.error("SMTP VERIFY FAILED:", err);
   } else {
-    console.log("SMTP READY ✅");
+    console.log("SMTP READY âœ…");
   }
 });
 
@@ -575,7 +601,7 @@ app.post("/admin/request-otp", async (req, res) => {
 
     otpStore[normalizedEmail] = { otp, expires };
 
-    // ✅ SEND OTP USING MAILJET API (NO SMTP)
+    // âœ… SEND OTP USING MAILJET API (NO SMTP)
     await mailjet
       .post("send", { version: "v3.1" })
       .request({
@@ -590,7 +616,7 @@ app.post("/admin/request-otp", async (req, res) => {
                 Email: normalizedEmail
               }
             ],
-            Subject: "Star Public School – Admin Verification Code",
+            Subject: "Star Public School â€“ Admin Verification Code",
             TextPart: `Your OTP is ${otp}. Valid for 5 minutes.`,
             HTMLPart: `
               <h3>Star Public School</h3>
@@ -642,4 +668,4 @@ app.get("/admin/dashboard", isAdminLoggedIn, (req, res) => {
     res.send("<h1>Welcome Admin!</h1><a href='/admin/logout'>Logout</a>");
 });
 
-app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`âœ… Server running at http://localhost:${PORT}`));

@@ -52,7 +52,7 @@ app.get('/result', (req, res) => {
   const division =
     percentage >= 60 ? 'First' :
     percentage >= 45 ? 'Second' :
-    percentage >= 33 ? 'Third' :
+    percentage >= 30 ? 'Third' :
     'Fail';
 
   res.json({
