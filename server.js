@@ -93,11 +93,105 @@ const CLASS_ALIAS_MAP = {
   LKGB: "L.K.G-B",
   UKGA: "U.K.G-A",
   UKGB: "U.K.G-B",
+  CLASS1: "CLASS 1",
+  CLASS2: "CLASS 2",
+  CLASS3: "CLASS 3",
+  CLASS4: "CLASS 4",
+  CLASS5: "CLASS 5",
+  CLASS6: "CLASS 6",
+  CLASS7: "CLASS 7",
+  CLASS8: "CLASS 8",
 };
 
 const canonicalizeClass = (cls = "") => {
   const token = normalizeClassToken(cls);
   return CLASS_ALIAS_MAP[token] || String(cls).trim().toUpperCase();
+};
+
+const CLASS_SORT_ORDER = [
+  "NURSERYA",
+  "NURSERYB",
+  "NURSERYC",
+  "LKGA",
+  "LKGB",
+  "UKGA",
+  "UKGB",
+  "CLASS1",
+  "CLASS2",
+  "CLASS3",
+  "CLASS4",
+  "CLASS5",
+  "CLASS6",
+  "CLASS7",
+  "CLASS8",
+];
+
+const normalizeClassSortToken = (className = "") => {
+  const canonicalClassName = canonicalizeClass(className);
+  const token = normalizeClassToken(canonicalClassName);
+  return /^\d+$/.test(token) ? `CLASS${token}` : token;
+};
+
+const classSortIndex = (className = "") => {
+  const token = normalizeClassSortToken(className);
+  const index = CLASS_SORT_ORDER.indexOf(token);
+  return index === -1 ? 999 : index;
+};
+
+const parseRollForSort = (rollValue = "") => {
+  const rawRoll = safeValue(rollValue);
+  if (/^\d+$/.test(rawRoll)) {
+    return {
+      isNumeric: true,
+      numeric: Number.parseInt(rawRoll, 10),
+      text: rawRoll,
+    };
+  }
+
+  return {
+    isNumeric: false,
+    numeric: Number.POSITIVE_INFINITY,
+    text: rawRoll.toUpperCase(),
+  };
+};
+
+const compareRollForSort = (leftRoll = "", rightRoll = "") => {
+  const left = parseRollForSort(leftRoll);
+  const right = parseRollForSort(rightRoll);
+
+  if (left.isNumeric && right.isNumeric && left.numeric !== right.numeric) {
+    return left.numeric - right.numeric;
+  }
+
+  if (left.isNumeric !== right.isNumeric) {
+    return left.isNumeric ? -1 : 1;
+  }
+
+  return left.text.localeCompare(right.text, undefined, { numeric: true });
+};
+
+const compareStudentsForDirectory = (leftRow, rightRow) => {
+  const leftClass = canonicalizeClass(leftRow?.classes?.class_name || "");
+  const rightClass = canonicalizeClass(rightRow?.classes?.class_name || "");
+
+  const classRankDiff = classSortIndex(leftClass) - classSortIndex(rightClass);
+  if (classRankDiff !== 0) return classRankDiff;
+
+  const classNameDiff = leftClass.localeCompare(rightClass, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+  if (classNameDiff !== 0) return classNameDiff;
+
+  const rollDiff = compareRollForSort(leftRow?.roll_no, rightRow?.roll_no);
+  if (rollDiff !== 0) return rollDiff;
+
+  const leftName = safeValue(leftRow?.full_name);
+  const rightName = safeValue(rightRow?.full_name);
+  return leftName.localeCompare(rightName, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
 };
 
 const LOWER_CLASS_SET = new Set([
@@ -1515,12 +1609,29 @@ app.get(
           examOrder.indexOf(a.exam_code) - examOrder.indexOf(b.exam_code)
       );
 
+      const classesByToken = new Map();
+      (classes || []).forEach((row) => {
+        const normalizedClassName = canonicalizeClass(row.class_name);
+        const token = normalizeClassToken(normalizedClassName);
+        if (!token) return;
+
+        if (!classesByToken.has(token)) {
+          classesByToken.set(token, {
+            id: row.id,
+            className: normalizedClassName,
+            classCode: token,
+          });
+        }
+      });
+
+      const cleanedClasses = Array.from(classesByToken.values()).sort((a, b) => {
+        const rankDiff = classSortIndex(a.className) - classSortIndex(b.className);
+        if (rankDiff !== 0) return rankDiff;
+        return a.className.localeCompare(b.className);
+      });
+
       return res.json({
-        classes: (classes || []).map((row) => ({
-          id: row.id,
-          className: row.class_name,
-          classCode: row.class_code,
-        })),
+        classes: cleanedClasses,
         exams: orderedExams.map((exam) => ({
           id: exam.id,
           examCode: exam.exam_code,
@@ -1543,18 +1654,31 @@ app.get(
     try {
       const className = safeValue(req.query.className || req.query.class);
       const search = safeValue(req.query.search).replace(/[%_,]/g, "");
+      const pageRaw = Number.parseInt(req.query.page, 10);
+      const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+      const pageSize = 30;
 
       let query = supabase
         .from("students")
         .select(
-          "id, class_id, roll_no, full_name, father_name, address, phone, dob, gender, created_at, updated_at, classes:class_id(class_name, class_code)"
-        )
-        .order("roll_no", { ascending: true });
+          "id, class_id, roll_no, full_name, father_name, address, phone, dob, gender, created_at, updated_at, classes:class_id(class_name, class_code)",
+          { count: "exact" }
+        );
 
       if (className) {
         const classRow = await getClassRow(className, false);
         if (!classRow) {
-          return res.json({ students: [] });
+          return res.json({
+            students: [],
+            pagination: {
+              page,
+              pageSize,
+              total: 0,
+              totalPages: 0,
+              hasPrev: false,
+              hasNext: false,
+            },
+          });
         }
         query = query.eq("class_id", classRow.id);
       }
@@ -1565,11 +1689,19 @@ app.get(
         );
       }
 
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       if (error) throw error;
 
+      const sortedRows = (data || []).sort(compareStudentsForDirectory);
+      const total = Number.isFinite(count) ? count : sortedRows.length;
+      const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
+      const safePage = totalPages === 0 ? 1 : Math.min(page, totalPages);
+      const from = (safePage - 1) * pageSize;
+      const to = from + pageSize;
+      const pagedRows = sortedRows.slice(from, to);
+
       return res.json({
-        students: (data || []).map((row) => ({
+        students: pagedRows.map((row) => ({
           id: row.id,
           roll: row.roll_no,
           name: row.full_name,
@@ -1578,9 +1710,17 @@ app.get(
           phone: row.phone || "",
           dob: row.dob || "",
           gender: row.gender || "",
-          className: row.classes?.class_name || "",
-          classCode: row.classes?.class_code || "",
+          className: canonicalizeClass(row.classes?.class_name || ""),
+          classCode: normalizeClassToken(row.classes?.class_code || ""),
         })),
+        pagination: {
+          page: safePage,
+          pageSize,
+          total,
+          totalPages,
+          hasPrev: safePage > 1,
+          hasNext: safePage < totalPages,
+        },
       });
     } catch (error) {
       console.error("Failed to load students:", error);

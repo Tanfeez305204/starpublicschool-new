@@ -61,6 +61,7 @@
             <table class="table">
               <thead>
                 <tr>
+                  <th>S.No</th>
                   <th>Roll No</th>
                   <th>Student Name</th>
                   <th>Father Name</th>
@@ -70,9 +71,20 @@
                 </tr>
               </thead>
               <tbody id="studentRows">
-                <tr><td colspan="6">Loading students...</td></tr>
+                <tr><td colspan="7">Loading students...</td></tr>
               </tbody>
             </table>
+          </div>
+
+          <div class="pagination-bar" id="studentsPagination">
+            <div class="pagination-left">
+              <span>Rows per page: <strong>30</strong></span>
+            </div>
+            <div class="pagination-right">
+              <button class="btn" type="button" id="prevPageBtn">Previous</button>
+              <span id="pageInfo">Page 1 of 1</span>
+              <button class="btn" type="button" id="nextPageBtn">Next</button>
+            </div>
           </div>
         </div>
 
@@ -203,8 +215,34 @@
       exams: [],
       students: [],
       currentMarkSubjects: [],
-      studentById: {}
+      studentById: {},
+      pagination: {
+        page: 1,
+        pageSize: 30,
+        total: 0,
+        totalPages: 0,
+        hasPrev: false,
+        hasNext: false
+      }
     };
+
+    const DIRECTORY_CLASS_ORDER = [
+      "NURSERYA",
+      "NURSERYB",
+      "NURSERYC",
+      "LKGA",
+      "LKGB",
+      "UKGA",
+      "UKGB",
+      "CLASS1",
+      "CLASS2",
+      "CLASS3",
+      "CLASS4",
+      "CLASS5",
+      "CLASS6",
+      "CLASS7",
+      "CLASS8"
+    ];
 
     const panelButtons = Array.from(document.querySelectorAll(".sidebar-btn"));
     const panels = {
@@ -288,6 +326,120 @@
       }
     }
 
+    function normalizeClassToken(value) {
+      return String(value || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "")
+        .replace(/\./g, "")
+        .replace(/_/g, "")
+        .replace(/-/g, "");
+    }
+
+    function canonicalClassDisplay(value) {
+      const token = normalizeClassToken(value);
+      const map = {
+        NURA: "NURSERY-A",
+        NURB: "NURSERY-B",
+        NURC: "NURSERY-C",
+        NURSERYA: "NURSERY-A",
+        NURSERYB: "NURSERY-B",
+        NURSERYC: "NURSERY-C",
+        LKGA: "L.K.G-A",
+        LKGB: "L.K.G-B",
+        UKGA: "U.K.G-A",
+        UKGB: "U.K.G-B",
+        CLASS1: "CLASS 1",
+        CLASS2: "CLASS 2",
+        CLASS3: "CLASS 3",
+        CLASS4: "CLASS 4",
+        CLASS5: "CLASS 5",
+        CLASS6: "CLASS 6",
+        CLASS7: "CLASS 7",
+        CLASS8: "CLASS 8"
+      };
+      return map[token] || String(value || "").trim().toUpperCase();
+    }
+
+    function cleanClassList(classes) {
+      const byToken = new Map();
+      (classes || []).forEach((cls) => {
+        const display = canonicalClassDisplay(cls.className || cls.classCode || "");
+        const token = normalizeClassToken(display);
+        if (!token) return;
+        if (!byToken.has(token)) {
+          byToken.set(token, {
+            id: cls.id || token,
+            className: display,
+            classCode: token
+          });
+        }
+      });
+
+      return Array.from(byToken.values()).sort((a, b) => {
+        const idxA = DIRECTORY_CLASS_ORDER.indexOf(a.classCode);
+        const idxB = DIRECTORY_CLASS_ORDER.indexOf(b.classCode);
+        const rankA = idxA === -1 ? 999 : idxA;
+        const rankB = idxB === -1 ? 999 : idxB;
+        if (rankA !== rankB) return rankA - rankB;
+        return a.className.localeCompare(b.className, undefined, { numeric: true });
+      });
+    }
+
+    function classSortRank(className) {
+      const canonical = canonicalClassDisplay(className || "");
+      const token = normalizeClassToken(canonical);
+      const normalized = /^\d+$/.test(token) ? `CLASS${token}` : token;
+      const index = DIRECTORY_CLASS_ORDER.indexOf(normalized);
+      return index === -1 ? 999 : index;
+    }
+
+    function parseRollForSort(value) {
+      const text = String(value || "").trim();
+      if (/^\d+$/.test(text)) {
+        return {
+          isNumeric: true,
+          numeric: Number.parseInt(text, 10),
+          text
+        };
+      }
+      return {
+        isNumeric: false,
+        numeric: Number.POSITIVE_INFINITY,
+        text: text.toUpperCase()
+      };
+    }
+
+    function compareStudentsForDirectory(leftStudent, rightStudent) {
+      const leftClass = canonicalClassDisplay(leftStudent.className || leftStudent.classCode || "");
+      const rightClass = canonicalClassDisplay(rightStudent.className || rightStudent.classCode || "");
+      const classRankDiff = classSortRank(leftClass) - classSortRank(rightClass);
+      if (classRankDiff !== 0) return classRankDiff;
+
+      const classNameDiff = leftClass.localeCompare(rightClass, undefined, {
+        numeric: true,
+        sensitivity: "base"
+      });
+      if (classNameDiff !== 0) return classNameDiff;
+
+      const leftRoll = parseRollForSort(leftStudent.roll);
+      const rightRoll = parseRollForSort(rightStudent.roll);
+      if (leftRoll.isNumeric && rightRoll.isNumeric && leftRoll.numeric !== rightRoll.numeric) {
+        return leftRoll.numeric - rightRoll.numeric;
+      }
+      if (leftRoll.isNumeric !== rightRoll.isNumeric) {
+        return leftRoll.isNumeric ? -1 : 1;
+      }
+
+      const rollTextDiff = leftRoll.text.localeCompare(rightRoll.text, undefined, { numeric: true });
+      if (rollTextDiff !== 0) return rollTextDiff;
+
+      return String(leftStudent.name || "").localeCompare(String(rightStudent.name || ""), undefined, {
+        numeric: true,
+        sensitivity: "base"
+      });
+    }
+
     function fillExamSelect() {
       const select = document.getElementById("marksExam");
       const currentValue = select.value;
@@ -310,6 +462,13 @@
       return [];
     }
 
+    function normalizeStudent(student) {
+      return {
+        ...student,
+        className: canonicalClassDisplay(student.className || student.classCode || "")
+      };
+    }
+
     function escapeHtml(value) {
       return String(value ?? "")
         .replace(/&/g, "&amp;")
@@ -322,7 +481,7 @@
     function renderStudents() {
       const body = document.getElementById("studentRows");
       if (!state.students.length) {
-        body.innerHTML = '<tr><td colspan="6">No students found.</td></tr>';
+        body.innerHTML = '<tr><td colspan="7">No students found.</td></tr>';
         return;
       }
 
@@ -334,9 +493,11 @@
 
       const rows = state.students
         .map((student, idx) => {
+          const serialNumber = (state.pagination.page - 1) * state.pagination.pageSize + idx + 1;
           const key = student.id || `${student.className || ""}::${student.roll || ""}::${idx}`;
           return `
             <tr>
+              <td>${serialNumber}</td>
               <td>${escapeHtml(student.roll || "-")}</td>
               <td>${escapeHtml(student.name || "-")}</td>
               <td>${escapeHtml(student.fatherName || "-")}</td>
@@ -352,6 +513,21 @@
         .join("");
 
       body.innerHTML = rows;
+    }
+
+    function renderPagination() {
+      const pageInfo = document.getElementById("pageInfo");
+      const prevBtn = document.getElementById("prevPageBtn");
+      const nextBtn = document.getElementById("nextPageBtn");
+
+      const { page, totalPages, total, hasPrev, hasNext } = state.pagination;
+      pageInfo.textContent =
+        totalPages > 0
+          ? `Page ${page} of ${totalPages} (${total} students)`
+          : `Page 1 of 1 (0 students)`;
+
+      prevBtn.disabled = !hasPrev;
+      nextBtn.disabled = !hasNext;
     }
 
     function editStudentById(studentId) {
@@ -378,20 +554,87 @@
       showPanel("marks-entry");
     }
 
-    async function loadStudents() {
+    async function loadStudents({ resetPage = false } = {}) {
       try {
+        if (resetPage) {
+          state.pagination.page = 1;
+        }
+
         const cls = document.getElementById("filterClass").value.trim();
         const search = document.getElementById("filterSearch").value.trim();
         const params = new URLSearchParams();
         if (cls) params.set("className", cls);
         if (search) params.set("search", search);
+        params.set("page", String(state.pagination.page));
 
         const data = await apiFetch(`/api/admin/students?${params.toString()}`);
-        state.students = extractStudents(data);
+        const normalizedStudents = extractStudents(data).map(normalizeStudent);
+        const sortedStudents = [...normalizedStudents].sort(compareStudentsForDirectory);
+        const serverPagination = data.pagination || {};
+        const hasServerPaginationMetadata =
+          serverPagination &&
+          (Object.prototype.hasOwnProperty.call(serverPagination, "total") ||
+            Object.prototype.hasOwnProperty.call(serverPagination, "totalPages"));
+        const hasServerPageSlice = sortedStudents.length <= 30;
+        const shouldUseServerPagination =
+          hasServerPaginationMetadata && hasServerPageSlice;
+
+        if (shouldUseServerPagination) {
+          const page = Number(serverPagination.page);
+          const total = Number(serverPagination.total);
+          const totalPages = Number(serverPagination.totalPages);
+          const safePage = Number.isFinite(page) && page > 0 ? page : state.pagination.page || 1;
+          const safeTotal = Number.isFinite(total) && total >= 0 ? total : sortedStudents.length;
+          const safeTotalPages =
+            Number.isFinite(totalPages) && totalPages >= 0
+              ? totalPages
+              : safeTotal === 0
+                ? 0
+                : Math.ceil(safeTotal / 30);
+          const normalizedPage =
+            safeTotalPages === 0 ? 1 : Math.min(Math.max(safePage, 1), safeTotalPages);
+
+          state.students = sortedStudents.slice(0, 30);
+          state.pagination = {
+            page: normalizedPage,
+            pageSize: 30,
+            total: safeTotal,
+            totalPages: safeTotalPages,
+            hasPrev: normalizedPage > 1,
+            hasNext: normalizedPage < safeTotalPages
+          };
+        } else {
+          const total = sortedStudents.length;
+          const totalPages = total === 0 ? 0 : Math.ceil(total / 30);
+          const safePage =
+            totalPages === 0 ? 1 : Math.min(Math.max(state.pagination.page, 1), totalPages);
+          const start = (safePage - 1) * 30;
+          const end = start + 30;
+
+          state.students = sortedStudents.slice(start, end);
+          state.pagination = {
+            page: safePage,
+            pageSize: 30,
+            total,
+            totalPages,
+            hasPrev: safePage > 1,
+            hasNext: safePage < totalPages
+          };
+        }
         renderStudents();
+        renderPagination();
       } catch (error) {
         state.students = [];
+        state.pagination = {
+          page: 1,
+          pageSize: 30,
+          total: 0,
+          totalPages: 0,
+          hasPrev: false,
+          hasNext: false
+        };
         renderStudents();
+        renderPagination();
         showMessage("directoryMsg", "error", error.message || "Failed to load students.");
       }
     }
@@ -526,7 +769,7 @@
     async function bootstrapDashboard() {
       try {
         const data = await apiFetch("/api/admin/bootstrap");
-        state.classes = data.classes || [];
+        state.classes = cleanClassList(data.classes || []);
         state.exams = data.exams || [];
 
         fillClassSelect("filterClass", true);
@@ -542,10 +785,22 @@
       }
     }
 
-    document.getElementById("filterBtn").addEventListener("click", loadStudents);
+    document.getElementById("filterBtn").addEventListener("click", () => loadStudents({ resetPage: true }));
     document.getElementById("clearFilterBtn").addEventListener("click", async () => {
       document.getElementById("filterClass").value = "";
       document.getElementById("filterSearch").value = "";
+      await loadStudents({ resetPage: true });
+    });
+
+    document.getElementById("prevPageBtn").addEventListener("click", async () => {
+      if (!state.pagination.hasPrev) return;
+      state.pagination.page = Math.max(1, state.pagination.page - 1);
+      await loadStudents();
+    });
+
+    document.getElementById("nextPageBtn").addEventListener("click", async () => {
+      if (!state.pagination.hasNext) return;
+      state.pagination.page += 1;
       await loadStudents();
     });
 

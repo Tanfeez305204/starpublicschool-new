@@ -272,6 +272,11 @@ textarea:focus {
   background: #f8fbff;
 }
 
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .btn.primary {
   border-color: var(--primary);
   background: var(--primary);
@@ -321,6 +326,46 @@ textarea:focus {
 }
 
 .table td.actions {
+  white-space: nowrap;
+}
+
+.pagination-bar {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pagination-left,
+.pagination-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-left label {
+  font-size: 13px;
+  color: #44546a;
+  font-weight: 700;
+}
+
+.pagination-left span {
+  font-size: 13px;
+  color: #44546a;
+  font-weight: 700;
+}
+
+.pagination-left select {
+  width: auto;
+  min-width: 84px;
+}
+
+#pageInfo {
+  font-size: 13px;
+  color: #44546a;
+  font-weight: 700;
   white-space: nowrap;
 }
 
