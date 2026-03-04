@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Environment secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Keep sample env
+!.env.example
+
+# Runtime logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Local generated artifacts
+results.updated_drawing_grades.xlsx
+~$*.xlsx
