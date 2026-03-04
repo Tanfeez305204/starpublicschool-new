@@ -1,5 +1,5 @@
 const express = require('express');
-const xlsx = require('xlsx');
+const Excel = require('exceljs');
 const path = require('path');
 const cors = require('cors');
 
@@ -9,18 +9,50 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.static('public')); // To serve HTML, CSS, logo.png, etc.
 
-const workbook = xlsx.readFile(path.join(__dirname, 'results.xlsx'));
-const sheet = workbook.Sheets['result']; // Only one sheet now
-const allData = xlsx.utils.sheet_to_json(sheet);
+// sanitize to mitigate prototype pollution from XLSX parser
+const sanitizeCellObject = (obj) => {
+  if (obj && typeof obj === "object") {
+    if (Array.isArray(obj)) {
+      return obj.map(sanitizeCellObject);
+    }
+    const clean = {};
+    for (const key of Object.keys(obj)) {
+      if (key === "__proto__" || key === "constructor" || key === "prototype") continue;
+      let val = obj[key];
+      if (typeof val === "object" && val !== null) val = sanitizeCellObject(val);
+      clean[key] = val;
+    }
+    return clean;
+  }
+  return obj;
+};
+
 
 // API to fetch student result
-app.get('/result', (req, res) => {
+app.get('/result', async (req, res) => {
   const studentClass = req.query.class?.trim();
   const roll = req.query.roll?.trim();
 
   if (!studentClass || !roll) {
     return res.json({ error: "Class and Roll number are required." });
   }
+
+  // load workbook each time (small file)
+  const workbook = new Excel.Workbook();
+  await workbook.xlsx.readFile(path.join(__dirname, 'results.xlsx'));
+  const worksheet = workbook.getWorksheet('result');
+  const headerRow = worksheet.getRow(1);
+  const headers = headerRow.values.slice(1);
+  let allData = [];
+  worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+    if (rowNumber === 1) return;
+    const rowObj = {};
+    row.values.slice(1).forEach((v, i) => {
+      rowObj[headers[i]] = v;
+    });
+    allData.push(rowObj);
+  });
+  allData = sanitizeCellObject(allData);
 
   // Filter student by class and roll
   const student = allData.find(s =>
