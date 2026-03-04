@@ -1,869 +1,493 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Star Public School - Admin Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Student Dashboard</title>
+
+<style>
+*{box-sizing:border-box;font-family:Inter,Arial}
+body{margin:0;background:#f5f6f8}
+.app{display:flex;height:100vh}
+.sidebar{width:220px;background:#0f3d2e;color:#fff;padding:20px;display:flex;flex-direction:column}
+.menu a{display:block;padding:10px;margin-bottom:8px;color:#dfeee8;text-decoration:none;border-radius:6px;cursor:pointer}
+.menu a.active,.menu a:hover{background:#1f6b4e}
+.logout{margin-top:auto;color:#ffb3b3;cursor:pointer}
+.main{flex:1;padding:30px;overflow:auto}
+.card{background:#fff;border-radius:14px;padding:30px;max-width:900px;margin:auto;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.hidden{display:none}
+h3{text-align:center}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;margin-top:5px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.full{grid-column:span 2}
+.btn{padding:10px 18px;border-radius:8px;border:none;cursor:pointer}
+.submit{background:#0f3d2e;color:#fff}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:10px;border-bottom:1px solid #ddd}
+th{background:#f0f0f0}
+.todo-item{display:flex;justify-content:space-between;margin-bottom:10px}
+#studentDetail table th {
+  width: 30%;
+  background: #f7f7f7;
+  text-align: left;
+}
+#studentDetail table td {
+  background: #fff;
+}
+
+</style>
 </head>
-<body class="dashboard-shell">
-  <div class="dashboard-app">
-    <aside class="dashboard-sidebar">
-      <div class="sidebar-brand">
-        <img src="content/logo.jpeg" alt="Star Public School logo" />
-        <div>
-          <h1>Admin Console</h1>
-          <p>Student Records + Marks</p>
-        </div>
-      </div>
 
-      <nav class="sidebar-nav" aria-label="Dashboard sections">
-        <button class="sidebar-btn active" data-panel="directory">Student Directory</button>
-        <button class="sidebar-btn" data-panel="student-form">Add / Update Student</button>
-        <button class="sidebar-btn" data-panel="marks-entry">Enter Subject Marks</button>
-      </nav>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <h2>Dashboard</h2>
+    <div class="menu">
+      <a class="active" onclick="showTab('addStudent',this)">Add Student</a>
+      <a onclick="showTab('viewStudents',this)">View Students</a>
+      <a onclick="showTab('addMarks',this)">Add Marks</a>
+      <a onclick="showTab('todo',this)">To-Do</a>
+    </div>
+    <a class="logout" onclick="logout()">Logout</a>
+  </aside>
 
-      <a class="sidebar-link" href="/provisional.html">Provisional Certificate</a>
-      <button class="sidebar-logout" id="logoutBtn" type="button">Logout</button>
-    </aside>
+  <main class="main">
 
-    <main class="dashboard-main">
-      <header class="dashboard-header">
-        <div>
-          <h2>Professional Result Management</h2>
-          <p>Manage student data and class-wise subject marks from Supabase.</p>
-        </div>
-        <div>
-          <span id="dbStatus" class="status-pill offline">Checking DB</span>
-        </div>
-      </header>
+<!-- ADD STUDENT -->
+<div id="addStudent" class="card">
+<h3>Add Student</h3>
+<div class="form">
+  <input id="roll" placeholder="Roll Number">
+  <input id="name" placeholder="Name">
+  <input id="fathername" placeholder="Father Name">
+  <input class="full" id="address" placeholder="Address">
+  <input id="phone" placeholder="Phone">
+  <input type="date" id="dob">
+  <select id="gender">
+    <option value="">Gender</option>
+    <option>Male</option>
+    <option>Female</option>
+  </select>
+  <select id="className">
+    <option value="">Class</option>
+     <option>Nursery-A</option>
+    <option>Nursery-B</option>
+     <option>Nursery-C</option>
+    <option>UKG-A</option>
+     <option>LKG-B</option>
+    <option>LKG-A</option>
+    <option>UKG-B</option>
+    <option>Class 1</option>
+     <option>Class 2</option>
+    <option>Class 3</option>
+     <option>Class 4</option>
+    <option>Class 5</option>
+     <option>Class 6</option>
+    <option>Class 7</option>
+     <option>Class 8</option>
+  </select>
+</div><br>
+<button class="btn submit" onclick="addStudent()">Submit</button>
+</div>
 
-      <section class="dashboard-content">
-        <div class="panel active" id="panel-directory">
-          <h3>Student Directory</h3>
-          <p class="panel-sub">Search students by class, roll number, or name. Open a record directly for marks entry.</p>
+<!-- VIEW STUDENTS -->
+<div id="viewStudents" class="card hidden">
+  <h3>View Students</h3>
 
-          <div class="message" id="directoryMsg"></div>
-
-          <div class="toolbar">
-            <select id="filterClass">
-              <option value="">All Classes</option>
-            </select>
-            <input id="filterSearch" type="text" placeholder="Search by roll or name" />
-            <button class="btn ghost" type="button" id="filterBtn">Search</button>
-            <button class="btn" type="button" id="clearFilterBtn">Clear</button>
-          </div>
-
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>S.No</th>
-                  <th>Roll No</th>
-                  <th>Student Name</th>
-                  <th>Father Name</th>
-                  <th>Class</th>
-                  <th>Phone</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="studentRows">
-                <tr><td colspan="7">Loading students...</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="pagination-bar" id="studentsPagination">
-            <div class="pagination-left">
-              <span>Rows per page: <strong>30</strong></span>
-            </div>
-            <div class="pagination-right">
-              <button class="btn" type="button" id="prevPageBtn">Previous</button>
-              <span id="pageInfo">Page 1 of 1</span>
-              <button class="btn" type="button" id="nextPageBtn">Next</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel" id="panel-student-form">
-          <h3>Add / Update Student</h3>
-          <p class="panel-sub">Save student profile first. Marks entry uses class + roll number.</p>
-
-          <div class="message" id="studentMsg"></div>
-
-          <form id="studentForm" novalidate>
-            <div class="form-grid">
-              <div class="field">
-                <label for="studentClass">Class</label>
-                <select id="studentClass" required>
-                  <option value="">Select class</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="studentRoll">Roll Number</label>
-                <input id="studentRoll" type="text" placeholder="e.g. 12" required />
-              </div>
-
-              <div class="field">
-                <label for="studentName">Student Name</label>
-                <input id="studentName" type="text" placeholder="Full name" required />
-              </div>
-
-              <div class="field">
-                <label for="studentFatherName">Father Name</label>
-                <input id="studentFatherName" type="text" placeholder="Father name" />
-              </div>
-
-              <div class="field">
-                <label for="studentPhone">Phone</label>
-                <input id="studentPhone" type="text" placeholder="Phone" />
-              </div>
-
-              <div class="field">
-                <label for="studentGender">Gender</label>
-                <select id="studentGender">
-                  <option value="">Select</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="studentDob">Date of Birth</label>
-                <input id="studentDob" type="date" />
-              </div>
-
-              <div class="field full">
-                <label for="studentAddress">Address</label>
-                <textarea id="studentAddress" placeholder="Address"></textarea>
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button class="btn" type="button" id="studentResetBtn">Reset</button>
-              <button class="btn primary" type="submit">Save Student</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="panel" id="panel-marks-entry">
-          <h3>Enter Subject Marks</h3>
-          <p class="panel-sub">Choose class, exam and roll number. Then enter marks subject-wise and save.</p>
-
-          <div class="message" id="marksMsg"></div>
-
-          <div class="marks-toolbar">
-            <div class="field">
-              <label for="marksClass">Class</label>
-              <select id="marksClass">
-                <option value="">Select class</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="marksExam">Exam Term</label>
-              <select id="marksExam">
-                <option value="">Select exam</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="marksRoll">Roll Number</label>
-              <input id="marksRoll" type="text" placeholder="Roll no" />
-            </div>
-
-            <div class="field">
-              <label for="marksStudentName">Student Name</label>
-              <input id="marksStudentName" type="text" placeholder="Required if new" />
-            </div>
-
-            <div class="field">
-              <label for="marksFatherName">Father Name</label>
-              <input id="marksFatherName" type="text" placeholder="Optional" />
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn ghost" type="button" id="loadMarksBtn">Load Subjects</button>
-            <button class="btn primary" type="button" id="saveMarksBtn">Save Marks</button>
-          </div>
-
-          <div class="marks-grid" id="marksGrid" aria-live="polite">
-            <div class="marks-head">
-              <div>Subject</div>
-              <div>Full</div>
-              <div>Pass</div>
-              <div>Marks / Grade</div>
-            </div>
-            <div class="marks-row"><div>No subjects loaded yet.</div><div>-</div><div>-</div><div>-</div></div>
-          </div>
-
-          <p class="helper">Accepted values: numeric marks (0-100) or codes `AB`, `NA`, `-`.</p>
-        </div>
-      </section>
-    </main>
+  <!-- FILTERS -->
+  <div class="form">
+    <input id="filterText" placeholder="Search by Roll or Name" onkeyup="filterStudents()">
+    <select id="filterClass" onchange="filterStudents()">
+      <option value="">All Classes</option>
+      <option>Nursery-A</option>
+    <option>Nursery-B</option>
+     <option>Nursery-C</option>
+    <option>UKG-A</option>
+     <option>LKG-B</option>
+    <option>LKG-A</option>
+    <option>UKG-B</option>
+    <option>Class 1</option>
+     <option>Class 2</option>
+    <option>Class 3</option>
+     <option>Class 4</option>
+    <option>Class 5</option>
+     <option>Class 6</option>
+    <option>Class 7</option>
+     <option>Class 8</option>
+    </select>
   </div>
 
-  <script>
-    const state = {
-      classes: [],
-      exams: [],
-      students: [],
-      currentMarkSubjects: [],
-      studentById: {},
-      pagination: {
-        page: 1,
-        pageSize: 30,
-        total: 0,
-        totalPages: 0,
-        hasPrev: false,
-        hasNext: false
-      }
-    };
+  <table>
+    <thead>
+      <tr>
+        <th style="padding-left:3px">Roll</th>
+        <th style="padding-left:70px">Name</th>
+        <th style="padding-left:140px">Class</th>
+        <th style="padding-left:170px">Action</th>
 
-    const DIRECTORY_CLASS_ORDER = [
-      "NURSERYA",
-      "NURSERYB",
-      "NURSERYC",
-      "LKGA",
-      "LKGB",
-      "UKGA",
-      "UKGB",
-      "CLASS1",
-      "CLASS2",
-      "CLASS3",
-      "CLASS4",
-      "CLASS5",
-      "CLASS6",
-      "CLASS7",
-      "CLASS8"
-    ];
+      </tr>
+    </thead>
+    <tbody id="studentTable"></tbody>
+  </table>
+</div>
 
-    const panelButtons = Array.from(document.querySelectorAll(".sidebar-btn"));
-    const panels = {
-      directory: document.getElementById("panel-directory"),
-      "student-form": document.getElementById("panel-student-form"),
-      "marks-entry": document.getElementById("panel-marks-entry")
-    };
+<!-- ADD MARKS -->
+<div id="addMarks" class="card hidden">
+<h3>Add Marks</h3>
+<div class="form">
+  <input id="rollInput" placeholder="Roll Number">
+  <select id="classSelect">
+    <option value="">Class</option>
+    <option>Nursery-A</option>
+    <option>Nursery-B</option>
+     <option>Nursery-C</option>
+    <option>UKG-A</option>
+     <option>LKG-B</option>
+    <option>LKG-A</option>
+    <option>UKG-B</option>
+    <option>Class 1</option>
+     <option>Class 2</option>
+    <option>Class 3</option>
+     <option>Class 4</option>
+    <option>Class 5</option>
+     <option>Class 6</option>
+    <option>Class 7</option>
+     <option>Class 8</option>
+  </select>
+</div><br>
+<div id="subjectMarks" class="form full"></div><br>
+<button class="btn submit" onclick="saveMarks()">Save Marks</button>
+</div>
 
-    function showPanel(panelId) {
-      panelButtons.forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.panel === panelId);
-      });
-      Object.entries(panels).forEach(([id, panel]) => {
-        panel.classList.toggle("active", id === panelId);
-      });
+<!-- TODO -->
+<div id="todo" class="card hidden">
+<h3>To-Do</h3>
+<input id="taskInput" placeholder="New task"><br><br>
+<button class="btn submit" onclick="addTask()">Add</button>
+<div id="taskList"></div>
+</div>
+<!-- STUDENT DETAIL PAGE -->
+<div id="studentDetail" class="card hidden">
+  <h3>Student Details</h3>
+
+  <table>
+    <tbody id="studentDetailTable"></tbody>
+  </table>
+
+  <br>
+
+  <div>
+    <button
+      class="btn submit"
+      onclick="showTab('viewStudents', document.querySelector('.menu a:nth-child(2)'))"
+      style="background:#6c757d"
+    >
+      ⬅ Back to Students
+    </button>
+
+    <button
+      onclick="updateMarks()"
+      style="margin-left:12px;padding:10px 18px;background:#0f3d2e;color:#fff;border:none;border-radius:8px;cursor:pointer"
+    >
+      ✏ Update Marks
+    </button>
+
+    <button
+      onclick="updateDetails()"
+      style="margin-left:12px;padding:10px 18px;background:#007bff;color:#fff;border:none;border-radius:8px;cursor:pointer"
+    >
+      ✏ Update Details
+    </button>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+  let selectedStudentIndex = null
+  let editStudentIndex = null
+  let editMarksIndex = null
+
+
+const FINAL_SUBJECTS = [
+  "Hindi",
+  "English",
+  "Math",
+  "Science",
+  "S.S.T",
+  "GK",
+  "Sanskrit / Urdu",
+  "Drawing",
+  "Computer / Table"
+];
+const LOWER_CLASS_SUBJECTS = [
+  "Hindi",
+  "English",
+  "Math",
+  "GK",
+  "Drawing",
+  "Computer / Table"
+];
+const subjectsByClass = {
+  "Nursery-A": LOWER_CLASS_SUBJECTS,
+  "Nursery-B": LOWER_CLASS_SUBJECTS,
+  "Nursery-C": LOWER_CLASS_SUBJECTS,
+
+  "LKG-A": LOWER_CLASS_SUBJECTS,
+  "LKG-B": LOWER_CLASS_SUBJECTS,
+
+  "UKG-A": LOWER_CLASS_SUBJECTS,
+  "UKG-B": LOWER_CLASS_SUBJECTS,
+
+  "Class 1": FINAL_SUBJECTS,
+  "Class 2": FINAL_SUBJECTS,
+  "Class 3": FINAL_SUBJECTS,
+  "Class 4": FINAL_SUBJECTS,
+  "Class 5": FINAL_SUBJECTS,
+  "Class 6": FINAL_SUBJECTS,
+  "Class 7": FINAL_SUBJECTS,
+  "Class 8": FINAL_SUBJECTS
+};
+
+
+let students=JSON.parse(localStorage.getItem("students"))||[]
+
+document.getElementById("classSelect").addEventListener("change", function () {
+  subjectMarks.innerHTML = ""
+
+  const rollNo = rollInput.value.trim()
+  const cls = this.value
+
+  if (!rollNo || !cls) return
+
+  const student = students.find(
+    s => s.roll === rollNo && s.className === cls
+  )
+
+  if (!student) {
+    alert("Student not found")
+    this.value = ""
+    return
+  }
+
+  // 🚫 MARKS ALREADY ADDED CHECK
+  if (student.marks && Object.keys(student.marks).length > 0) {
+    alert("Marks already added for this student")
+    this.value = ""
+    return
+  }
+
+  // ✅ ALLOW MARKS ENTRY
+  ;(subjectsByClass[cls] || []).forEach(subject => {
+    subjectMarks.innerHTML += `
+      <input type="number" min="0" max="100" placeholder="${subject}" data-subject="${subject}">
+    `
+  })
+})
+
+function showTab(id,el){
+ document.querySelectorAll(".card").forEach(c=>c.classList.add("hidden"))
+ document.getElementById(id).classList.remove("hidden")
+ document.querySelectorAll(".menu a").forEach(a=>a.classList.remove("active"))
+ el.classList.add("active")
+ if(id==="viewStudents")renderStudents()
+}
+
+function addStudent(){
+  const student = {
+    roll: document.getElementById("roll").value.trim(),
+    name: document.getElementById("name").value.trim(),
+    fathername: document.getElementById("fathername").value.trim(),
+    address: document.getElementById("address").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    dob: document.getElementById("dob").value,
+    gender: document.getElementById("gender").value,
+    className: document.getElementById("className").value,
+    marks: {}
+  }
+
+  if(!student.roll || !student.name || !student.className){
+    alert("Roll, Name & Class required")
+    return
+  }
+
+  // ✅ UPDATE MODE
+  if(editStudentIndex !== null){
+    students[editStudentIndex] = {
+      ...students[editStudentIndex],
+      ...student,
+      marks: students[editStudentIndex].marks // marks safe
     }
 
-    panelButtons.forEach((btn) => {
-      btn.addEventListener("click", () => showPanel(btn.dataset.panel));
-    });
-
-    function setStatus(online) {
-      const node = document.getElementById("dbStatus");
-      node.classList.toggle("online", online);
-      node.classList.toggle("offline", !online);
-      node.textContent = online ? "Supabase Connected" : "Supabase Offline";
-    }
-
-    function showMessage(elementId, type, message) {
-      const box = document.getElementById(elementId);
-      box.className = `message show ${type}`;
-      box.textContent = message;
-      setTimeout(() => {
-        box.classList.remove("show");
-      }, 5000);
-    }
-
-    async function apiFetch(url, options = {}) {
-      const config = {
-        credentials: "include",
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...(options.headers || {})
-        }
-      };
-
-      const response = await fetch(url, config);
-      let data = {};
-      try {
-        data = await response.json();
-      } catch (_) {}
-
-      if (response.status === 401) {
-        window.location.href = "/admin.html";
-        throw new Error("Unauthorized");
-      }
-
-      if (!response.ok) {
-        const err = new Error(data.error || "Request failed");
-        err.status = response.status;
-        throw err;
-      }
-
-      return data;
-    }
-
-    function fillClassSelect(selectId, includeAll = false) {
-      const select = document.getElementById(selectId);
-      const currentValue = select.value;
-      const defaultLabel = includeAll ? "All Classes" : "Select class";
-      select.innerHTML = `<option value="">${defaultLabel}</option>`;
-      state.classes.forEach((cls) => {
-        const option = document.createElement("option");
-        option.value = cls.className;
-        option.textContent = cls.className;
-        select.appendChild(option);
-      });
-      if (currentValue) {
-        select.value = currentValue;
-      }
-    }
-
-    function normalizeClassToken(value) {
-      return String(value || "")
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, "")
-        .replace(/\./g, "")
-        .replace(/_/g, "")
-        .replace(/-/g, "");
-    }
-
-    function canonicalClassDisplay(value) {
-      const token = normalizeClassToken(value);
-      const map = {
-        NURA: "NURSERY-A",
-        NURB: "NURSERY-B",
-        NURC: "NURSERY-C",
-        NURSERYA: "NURSERY-A",
-        NURSERYB: "NURSERY-B",
-        NURSERYC: "NURSERY-C",
-        LKGA: "L.K.G-A",
-        LKGB: "L.K.G-B",
-        UKGA: "U.K.G-A",
-        UKGB: "U.K.G-B",
-        CLASS1: "CLASS 1",
-        CLASS2: "CLASS 2",
-        CLASS3: "CLASS 3",
-        CLASS4: "CLASS 4",
-        CLASS5: "CLASS 5",
-        CLASS6: "CLASS 6",
-        CLASS7: "CLASS 7",
-        CLASS8: "CLASS 8"
-      };
-      return map[token] || String(value || "").trim().toUpperCase();
-    }
-
-    function cleanClassList(classes) {
-      const byToken = new Map();
-      (classes || []).forEach((cls) => {
-        const display = canonicalClassDisplay(cls.className || cls.classCode || "");
-        const token = normalizeClassToken(display);
-        if (!token) return;
-        if (!byToken.has(token)) {
-          byToken.set(token, {
-            id: cls.id || token,
-            className: display,
-            classCode: token
-          });
-        }
-      });
-
-      return Array.from(byToken.values()).sort((a, b) => {
-        const idxA = DIRECTORY_CLASS_ORDER.indexOf(a.classCode);
-        const idxB = DIRECTORY_CLASS_ORDER.indexOf(b.classCode);
-        const rankA = idxA === -1 ? 999 : idxA;
-        const rankB = idxB === -1 ? 999 : idxB;
-        if (rankA !== rankB) return rankA - rankB;
-        return a.className.localeCompare(b.className, undefined, { numeric: true });
-      });
-    }
-
-    function classSortRank(className) {
-      const canonical = canonicalClassDisplay(className || "");
-      const token = normalizeClassToken(canonical);
-      const normalized = /^\d+$/.test(token) ? `CLASS${token}` : token;
-      const index = DIRECTORY_CLASS_ORDER.indexOf(normalized);
-      return index === -1 ? 999 : index;
-    }
-
-    function parseRollForSort(value) {
-      const text = String(value || "").trim();
-      if (/^\d+$/.test(text)) {
-        return {
-          isNumeric: true,
-          numeric: Number.parseInt(text, 10),
-          text
-        };
-      }
-      return {
-        isNumeric: false,
-        numeric: Number.POSITIVE_INFINITY,
-        text: text.toUpperCase()
-      };
-    }
-
-    function compareStudentsForDirectory(leftStudent, rightStudent) {
-      const leftClass = canonicalClassDisplay(leftStudent.className || leftStudent.classCode || "");
-      const rightClass = canonicalClassDisplay(rightStudent.className || rightStudent.classCode || "");
-      const classRankDiff = classSortRank(leftClass) - classSortRank(rightClass);
-      if (classRankDiff !== 0) return classRankDiff;
-
-      const classNameDiff = leftClass.localeCompare(rightClass, undefined, {
-        numeric: true,
-        sensitivity: "base"
-      });
-      if (classNameDiff !== 0) return classNameDiff;
-
-      const leftRoll = parseRollForSort(leftStudent.roll);
-      const rightRoll = parseRollForSort(rightStudent.roll);
-      if (leftRoll.isNumeric && rightRoll.isNumeric && leftRoll.numeric !== rightRoll.numeric) {
-        return leftRoll.numeric - rightRoll.numeric;
-      }
-      if (leftRoll.isNumeric !== rightRoll.isNumeric) {
-        return leftRoll.isNumeric ? -1 : 1;
-      }
-
-      const rollTextDiff = leftRoll.text.localeCompare(rightRoll.text, undefined, { numeric: true });
-      if (rollTextDiff !== 0) return rollTextDiff;
-
-      return String(leftStudent.name || "").localeCompare(String(rightStudent.name || ""), undefined, {
-        numeric: true,
-        sensitivity: "base"
-      });
-    }
-
-    function fillExamSelect() {
-      const select = document.getElementById("marksExam");
-      const currentValue = select.value;
-      select.innerHTML = '<option value="">Select exam</option>';
-      state.exams.forEach((exam) => {
-        const option = document.createElement("option");
-        option.value = exam.examCode;
-        option.textContent = `${exam.examName} (${exam.examCode.toUpperCase()})`;
-        select.appendChild(option);
-      });
-      if (currentValue) {
-        select.value = currentValue;
-      }
-    }
-
-    function extractStudents(payload) {
-      if (Array.isArray(payload?.students)) return payload.students;
-      if (Array.isArray(payload?.data)) return payload.data;
-      if (Array.isArray(payload)) return payload;
-      return [];
-    }
-
-    function normalizeStudent(student) {
-      return {
-        ...student,
-        className: canonicalClassDisplay(student.className || student.classCode || "")
-      };
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
-
-    function renderStudents() {
-      const body = document.getElementById("studentRows");
-      if (!state.students.length) {
-        body.innerHTML = '<tr><td colspan="7">No students found.</td></tr>';
-        return;
-      }
-
-      state.studentById = {};
-      state.students.forEach((student, idx) => {
-        const key = student.id || `${student.className || ""}::${student.roll || ""}::${idx}`;
-        state.studentById[key] = student;
-      });
-
-      const rows = state.students
-        .map((student, idx) => {
-          const serialNumber = (state.pagination.page - 1) * state.pagination.pageSize + idx + 1;
-          const key = student.id || `${student.className || ""}::${student.roll || ""}::${idx}`;
-          return `
-            <tr>
-              <td>${serialNumber}</td>
-              <td>${escapeHtml(student.roll || "-")}</td>
-              <td>${escapeHtml(student.name || "-")}</td>
-              <td>${escapeHtml(student.fatherName || "-")}</td>
-              <td>${escapeHtml(student.className || "-")}</td>
-              <td>${escapeHtml(student.phone || "-")}</td>
-              <td class="actions">
-                <button class="btn" type="button" data-action="edit" data-student-id="${escapeHtml(key)}">Edit</button>
-                <button class="btn ghost" type="button" data-action="marks" data-student-id="${escapeHtml(key)}">Marks</button>
-              </td>
-            </tr>
-          `;
-        })
-        .join("");
-
-      body.innerHTML = rows;
-    }
-
-    function renderPagination() {
-      const pageInfo = document.getElementById("pageInfo");
-      const prevBtn = document.getElementById("prevPageBtn");
-      const nextBtn = document.getElementById("nextPageBtn");
-
-      const { page, totalPages, total, hasPrev, hasNext } = state.pagination;
-      pageInfo.textContent =
-        totalPages > 0
-          ? `Page ${page} of ${totalPages} (${total} students)`
-          : `Page 1 of 1 (0 students)`;
-
-      prevBtn.disabled = !hasPrev;
-      nextBtn.disabled = !hasNext;
-    }
-
-    function editStudentById(studentId) {
-      const student = state.studentById[studentId];
-      if (!student) return;
-      document.getElementById("studentClass").value = student.className || "";
-      document.getElementById("studentRoll").value = student.roll || "";
-      document.getElementById("studentName").value = student.name || "";
-      document.getElementById("studentFatherName").value = student.fatherName || "";
-      document.getElementById("studentPhone").value = student.phone || "";
-      document.getElementById("studentGender").value = student.gender || "";
-      document.getElementById("studentDob").value = student.dob || "";
-      document.getElementById("studentAddress").value = student.address || "";
-      showPanel("student-form");
-    }
-
-    function openMarksById(studentId) {
-      const student = state.studentById[studentId];
-      if (!student) return;
-      document.getElementById("marksClass").value = student.className || "";
-      document.getElementById("marksRoll").value = student.roll || "";
-      document.getElementById("marksStudentName").value = student.name || "";
-      document.getElementById("marksFatherName").value = student.fatherName || "";
-      showPanel("marks-entry");
-    }
-
-    async function loadStudents({ resetPage = false } = {}) {
-      try {
-        if (resetPage) {
-          state.pagination.page = 1;
-        }
-
-        const cls = document.getElementById("filterClass").value.trim();
-        const search = document.getElementById("filterSearch").value.trim();
-        const params = new URLSearchParams();
-        if (cls) params.set("className", cls);
-        if (search) params.set("search", search);
-        params.set("page", String(state.pagination.page));
-
-        const data = await apiFetch(`/api/admin/students?${params.toString()}`);
-        const normalizedStudents = extractStudents(data).map(normalizeStudent);
-        const sortedStudents = [...normalizedStudents].sort(compareStudentsForDirectory);
-        const serverPagination = data.pagination || {};
-        const hasServerPaginationMetadata =
-          serverPagination &&
-          (Object.prototype.hasOwnProperty.call(serverPagination, "total") ||
-            Object.prototype.hasOwnProperty.call(serverPagination, "totalPages"));
-        const hasServerPageSlice = sortedStudents.length <= 30;
-        const shouldUseServerPagination =
-          hasServerPaginationMetadata && hasServerPageSlice;
-
-        if (shouldUseServerPagination) {
-          const page = Number(serverPagination.page);
-          const total = Number(serverPagination.total);
-          const totalPages = Number(serverPagination.totalPages);
-          const safePage = Number.isFinite(page) && page > 0 ? page : state.pagination.page || 1;
-          const safeTotal = Number.isFinite(total) && total >= 0 ? total : sortedStudents.length;
-          const safeTotalPages =
-            Number.isFinite(totalPages) && totalPages >= 0
-              ? totalPages
-              : safeTotal === 0
-                ? 0
-                : Math.ceil(safeTotal / 30);
-          const normalizedPage =
-            safeTotalPages === 0 ? 1 : Math.min(Math.max(safePage, 1), safeTotalPages);
-
-          state.students = sortedStudents.slice(0, 30);
-          state.pagination = {
-            page: normalizedPage,
-            pageSize: 30,
-            total: safeTotal,
-            totalPages: safeTotalPages,
-            hasPrev: normalizedPage > 1,
-            hasNext: normalizedPage < safeTotalPages
-          };
-        } else {
-          const total = sortedStudents.length;
-          const totalPages = total === 0 ? 0 : Math.ceil(total / 30);
-          const safePage =
-            totalPages === 0 ? 1 : Math.min(Math.max(state.pagination.page, 1), totalPages);
-          const start = (safePage - 1) * 30;
-          const end = start + 30;
-
-          state.students = sortedStudents.slice(start, end);
-          state.pagination = {
-            page: safePage,
-            pageSize: 30,
-            total,
-            totalPages,
-            hasPrev: safePage > 1,
-            hasNext: safePage < totalPages
-          };
-        }
-        renderStudents();
-        renderPagination();
-      } catch (error) {
-        state.students = [];
-        state.pagination = {
-          page: 1,
-          pageSize: 30,
-          total: 0,
-          totalPages: 0,
-          hasPrev: false,
-          hasNext: false
-        };
-        renderStudents();
-        renderPagination();
-        showMessage("directoryMsg", "error", error.message || "Failed to load students.");
-      }
-    }
-
-    function clearStudentForm() {
-      document.getElementById("studentForm").reset();
-    }
-
-    function renderMarksGrid(subjects) {
-      state.currentMarkSubjects = subjects || [];
-      const grid = document.getElementById("marksGrid");
-      if (!state.currentMarkSubjects.length) {
-        grid.innerHTML = `
-          <div class="marks-head">
-            <div>Subject</div>
-            <div>Full</div>
-            <div>Pass</div>
-            <div>Marks / Grade</div>
-          </div>
-          <div class="marks-row"><div>No subjects loaded yet.</div><div>-</div><div>-</div><div>-</div></div>
-        `;
-        return;
-      }
-
-      const rowsHtml = state.currentMarkSubjects
-        .map((subject) => `
-          <div class="marks-row">
-            <div>${subject.subject}</div>
-            <div>${subject.fullMarks}</div>
-            <div>${subject.passMarks}</div>
-            <div>
-              <input
-                type="text"
-                value="${subject.value ?? ""}"
-                data-subject-code="${subject.subjectCode}"
-                data-subject-name="${subject.subject}"
-                placeholder="0-100 / AB / NA"
-              />
-            </div>
-          </div>
-        `)
-        .join("");
-
-      grid.innerHTML = `
-        <div class="marks-head">
-          <div>Subject</div>
-          <div>Full</div>
-          <div>Pass</div>
-          <div>Marks / Grade</div>
-        </div>
-        ${rowsHtml}
-      `;
-    }
-
-    async function loadMarksSubjects() {
-      const className = document.getElementById("marksClass").value.trim();
-      const roll = document.getElementById("marksRoll").value.trim();
-      const examCode = document.getElementById("marksExam").value.trim();
-
-      if (!className || !roll || !examCode) {
-        showMessage("marksMsg", "error", "Class, exam, and roll number are required.");
-        return;
-      }
-
-      try {
-        const data = await apiFetch(
-          `/api/admin/marks?className=${encodeURIComponent(className)}&roll=${encodeURIComponent(roll)}&examCode=${encodeURIComponent(examCode)}`
-        );
-
-        document.getElementById("marksStudentName").value = data.student?.name || "";
-        document.getElementById("marksFatherName").value = data.student?.fatherName || "";
-        renderMarksGrid(data.subjects || []);
-        showMessage("marksMsg", "success", "Subjects loaded successfully.");
-      } catch (error) {
-        if (error.status === 404) {
-          const subjectsData = await apiFetch(
-            `/api/admin/subjects?className=${encodeURIComponent(className)}`
-          );
-          renderMarksGrid(subjectsData.subjects || []);
-          showMessage("marksMsg", "error", "Student not found in DB. Enter student name and save marks to create record.");
-          return;
-        }
-        showMessage("marksMsg", "error", error.message);
-      }
-    }
-
-    async function saveMarks() {
-      const className = document.getElementById("marksClass").value.trim();
-      const roll = document.getElementById("marksRoll").value.trim();
-      const examCode = document.getElementById("marksExam").value.trim();
-      const studentName = document.getElementById("marksStudentName").value.trim();
-      const fatherName = document.getElementById("marksFatherName").value.trim();
-
-      if (!className || !roll || !examCode) {
-        showMessage("marksMsg", "error", "Class, exam and roll number are required.");
-        return;
-      }
-
-      const markInputs = Array.from(document.querySelectorAll("#marksGrid .marks-row input"));
-      if (!markInputs.length) {
-        showMessage("marksMsg", "error", "Load subjects before saving marks.");
-        return;
-      }
-
-      const marks = markInputs.map((input) => ({
-        subjectCode: input.dataset.subjectCode,
-        subjectName: input.dataset.subjectName,
-        value: input.value.trim()
-      }));
-
-      try {
-        const data = await apiFetch("/api/admin/marks", {
-          method: "POST",
-          body: JSON.stringify({
-            className,
-            roll,
-            examCode,
-            studentName,
-            fatherName,
-            marks
-          })
-        });
-
-        renderMarksGrid(data.subjects || []);
-        showMessage("marksMsg", "success", data.message || "Marks saved successfully.");
-        await loadStudents();
-      } catch (error) {
-        showMessage("marksMsg", "error", error.message);
-      }
-    }
-
-    async function bootstrapDashboard() {
-      try {
-        const data = await apiFetch("/api/admin/bootstrap");
-        state.classes = cleanClassList(data.classes || []);
-        state.exams = data.exams || [];
-
-        fillClassSelect("filterClass", true);
-        fillClassSelect("studentClass");
-        fillClassSelect("marksClass");
-        fillExamSelect();
-        setStatus(true);
-
-        await loadStudents();
-      } catch (error) {
-        setStatus(false);
-        showMessage("directoryMsg", "error", error.message || "Failed to load dashboard.");
-      }
-    }
-
-    document.getElementById("filterBtn").addEventListener("click", () => loadStudents({ resetPage: true }));
-    document.getElementById("clearFilterBtn").addEventListener("click", async () => {
-      document.getElementById("filterClass").value = "";
-      document.getElementById("filterSearch").value = "";
-      await loadStudents({ resetPage: true });
-    });
-
-    document.getElementById("prevPageBtn").addEventListener("click", async () => {
-      if (!state.pagination.hasPrev) return;
-      state.pagination.page = Math.max(1, state.pagination.page - 1);
-      await loadStudents();
-    });
-
-    document.getElementById("nextPageBtn").addEventListener("click", async () => {
-      if (!state.pagination.hasNext) return;
-      state.pagination.page += 1;
-      await loadStudents();
-    });
-
-    document.getElementById("studentRows").addEventListener("click", (event) => {
-      const button = event.target.closest("button[data-action][data-student-id]");
-      if (!button) return;
-
-      const action = button.dataset.action;
-      const studentId = button.dataset.studentId;
-      if (!studentId) return;
-
-      if (action === "edit") {
-        editStudentById(studentId);
-      } else if (action === "marks") {
-        openMarksById(studentId);
-      }
-    });
-
-    document.getElementById("studentResetBtn").addEventListener("click", clearStudentForm);
-
-    document.getElementById("studentForm").addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const payload = {
-        className: document.getElementById("studentClass").value.trim(),
-        roll: document.getElementById("studentRoll").value.trim(),
-        name: document.getElementById("studentName").value.trim(),
-        fatherName: document.getElementById("studentFatherName").value.trim(),
-        phone: document.getElementById("studentPhone").value.trim(),
-        gender: document.getElementById("studentGender").value.trim(),
-        dob: document.getElementById("studentDob").value,
-        address: document.getElementById("studentAddress").value.trim()
-      };
-
-      try {
-        await apiFetch("/api/admin/students", {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-
-        showMessage("studentMsg", "success", "Student saved successfully.");
-        await loadStudents();
-      } catch (error) {
-        showMessage("studentMsg", "error", error.message);
-      }
-    });
-
-    document.getElementById("loadMarksBtn").addEventListener("click", loadMarksSubjects);
-    document.getElementById("saveMarksBtn").addEventListener("click", saveMarks);
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      try {
-        await fetch("/admin/logout", {
-          method: "POST",
-          credentials: "include"
-        });
-      } catch (_) {
-        // ignore
-      }
-      window.location.href = "/admin.html";
-    });
-
-    bootstrapDashboard();
-  </script>
+    localStorage.setItem("students", JSON.stringify(students))
+    editStudentIndex = null
+
+    alert("Student Details Updated Successfully")
+
+    document.querySelectorAll("#addStudent input, #addStudent select")
+      .forEach(el => el.value = "")
+
+    showTab("viewStudents", document.querySelector(".menu a:nth-child(2)"))
+    return
+  }
+
+  // ✅ ADD MODE (normal)
+  const exists = students.some(
+    s => s.roll === student.roll && s.className === student.className
+  )
+
+  if(exists){
+    alert("Student with this Roll already exists")
+    return
+  }
+
+  students.push(student)
+  localStorage.setItem("students", JSON.stringify(students))
+
+  alert("Student Added Successfully")
+
+  document.querySelectorAll("#addStudent input, #addStudent select")
+    .forEach(el => el.value = "")
+}
+
+
+function renderStudents(list = students){
+  const table = document.getElementById("studentTable")
+  table.innerHTML = ""
+
+  if(list.length === 0){
+    table.innerHTML = `<tr><td colspan="4">No students found</td></tr>`
+    return
+  }
+
+  list.forEach((s,i)=>{
+    table.innerHTML += `
+      <tr>
+       <td style="padding-left:30px">${s.roll}</td>
+       <td style="padding-left:90px">${s.name}</td>
+       <td style="padding-left:150px">${s.className}</td>
+
+        <td>
+          <button onclick="viewStudent(${i})" style="margin-left:150px;padding:6px 14px;background:#0f3d2e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">View</button>
+          <button onclick="removeStudent(${i})" style="margin-left:6px;padding:6px 14px;background:red;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">Remove</button>
+          </button>
+        </td>
+      </tr>
+    `
+  })
+}
+function filterStudents(){
+  const text = document.getElementById("filterText").value.toLowerCase()
+  const cls = document.getElementById("filterClass").value
+
+  const filtered = students.filter(s => {
+    const matchText =
+      s.roll.toLowerCase().includes(text) ||
+      s.name.toLowerCase().includes(text)
+
+    const matchClass = cls ? s.className === cls : true
+
+    return matchText && matchClass
+  })
+
+  renderStudents(filtered)
+}
+function removeStudent(index){
+  if(!confirm("Are you sure you want to remove this student?")) return
+  students.splice(index, 1)
+  localStorage.setItem("students", JSON.stringify(students))
+  renderStudents()
+}
+
+function viewStudent(i){
+  selectedStudentIndex = i
+  const s = students[i]
+  const table = document.getElementById("studentDetailTable")
+
+  let marksHtml = "<tr><td colspan='2'>No marks added</td></tr>"
+  if (Object.keys(s.marks).length) {
+    marksHtml = Object.entries(s.marks)
+      .map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
+      .join("")
+  }
+
+  table.innerHTML = `
+    <tr><th>Roll No</th><td>${s.roll}</td></tr>
+    <tr><th>Name</th><td>${s.name}</td></tr>
+    <tr><th>Father Name</th><td>${s.fathername}</td></tr>
+    <tr><th>Mobile</th><td>${s.phone}</td></tr>
+    <tr><th>Address</th><td>${s.address}</td></tr>
+    <tr><th>Class</th><td>${s.className}</td></tr>
+
+    <tr><th colspan="2" style="background:#f0f0f0">Marks</th></tr>
+    ${marksHtml}
+  `
+
+  // hide all cards
+  document.querySelectorAll(".card").forEach(c => c.classList.add("hidden"))
+  document.getElementById("studentDetail").classList.remove("hidden")
+}
+
+function updateMarks(){
+  const s = students[selectedStudentIndex]
+  editMarksIndex = selectedStudentIndex   // 👈 UPDATE MODE
+
+  rollInput.value = s.roll
+  classSelect.value = s.className
+
+  showTab("addMarks", document.querySelector(".menu a:nth-child(3)"))
+
+  // subjects load karo
+  subjectMarks.innerHTML = ""
+  ;(subjectsByClass[s.className] || []).forEach(sub => {
+    subjectMarks.innerHTML += `
+      <input type="number" min="0" max="100"
+        placeholder="${sub}"
+        data-subject="${sub}"
+        value="${s.marks[sub] ?? ""}">
+    `
+  })
+}
+
+function updateDetails(){
+  const s = students[selectedStudentIndex]
+  editStudentIndex = selectedStudentIndex   // 👈 IMPORTANT
+
+  document.getElementById("roll").value = s.roll
+  document.getElementById("name").value = s.name
+  document.getElementById("fathername").value = s.fathername
+  document.getElementById("address").value = s.address
+  document.getElementById("phone").value = s.phone
+  document.getElementById("dob").value = s.dob
+  document.getElementById("gender").value = s.gender
+  document.getElementById("className").value = s.className
+
+  showTab("addStudent", document.querySelector(".menu a:nth-child(1)"))
+}
+
+function saveMarks(){
+ const rollNo=rollInput.value.trim()
+ const cls=classSelect.value
+ if(!rollNo||!cls){alert("Roll & Class required");return}
+ const s=students.find(x=>x.roll===rollNo&&x.className===cls)
+ if(!s){alert("Student not found");return}
+ s.marks={}
+ document.querySelectorAll("#subjectMarks input").forEach(i=>{
+  s.marks[i.dataset.subject]=Number(i.value)||0
+ })
+ localStorage.setItem("students",JSON.stringify(students))
+ alert("Marks Saved")
+ rollInput.value="";classSelect.value="";subjectMarks.innerHTML=""
+}
+
+function addTask(){
+ if(!taskInput.value)return
+ taskList.innerHTML+=`<div class="todo-item">${taskInput.value}<button onclick="this.parentElement.remove()">❌</button></div>`
+ taskInput.value=""
+}
+
+function logout(){localStorage.clear();location.reload()}
+</script>
 </body>
 </html>
