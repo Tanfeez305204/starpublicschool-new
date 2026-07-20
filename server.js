@@ -1,5 +1,5 @@
-﻿
-require("dotenv").config();   // âœ… SABSE UPAR
+
+require("dotenv").config();   // ✅ SABSE UPAR
 
 const fs = require("fs");
 const express = require("express");
@@ -10,19 +10,13 @@ const bodyParser = require("body-parser");
 const session = require("express-session");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
+const serverless = require("serverless-http");
 const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const Mailjet = require("node-mailjet");
 
-const mailjet = Mailjet.apiConnect(
-  process.env.SMTP_USER,
-  process.env.SMTP_PASS
-);
-
- 
 app.use(cors());
 
 //  Read Excel safely (using exceljs, returns array of row objects)
@@ -463,14 +457,15 @@ const calculateTermStats = (termValues, subjectConfigs, className) => {
   };
 };
 
-async function ensureExamRows() {
+async function ensureExamRows(session = DEFAULT_ACADEMIC_SESSION) {
   if (!isSupabaseEnabled()) return [];
 
   const requestedCodes = ["1st", "2nd", "3rd", "annual"];
   const { data: existing, error: existingError } = await supabase
     .from("exams")
     .select("id, exam_code")
-    .in("exam_code", requestedCodes);
+    .in("exam_code", requestedCodes)
+    .eq("academic_session", session);
 
   if (existingError) throw existingError;
 
@@ -481,7 +476,7 @@ async function ensureExamRows() {
     const rows = missingCodes.map((examCode) => ({
       exam_code: examCode,
       exam_name: EXAM_NAME_BY_CODE[examCode] || examCode,
-      academic_session: DEFAULT_ACADEMIC_SESSION,
+      academic_session: session,
       is_active: true,
     }));
 
@@ -492,7 +487,8 @@ async function ensureExamRows() {
   const { data: refreshed, error: refreshedError } = await supabase
     .from("exams")
     .select("id, exam_code, exam_name, academic_session")
-    .in("exam_code", requestedCodes);
+    .in("exam_code", requestedCodes)
+    .eq("academic_session", session);
 
   if (refreshedError) throw refreshedError;
   return refreshed || [];
@@ -851,7 +847,7 @@ async function getOrCreatePcNumber(studentId) {
   throw new Error("Unable to generate provisional certificate number.");
 }
 
-async function buildResultFromSupabase({ className, roll, terminal }) {
+async function buildResultFromSupabase({ className, roll, terminal, session }) {
   if (!isSupabaseEnabled()) {
     return { status: "disabled" };
   }
@@ -867,7 +863,7 @@ async function buildResultFromSupabase({ className, roll, terminal }) {
   }
 
   const subjectConfigs = await getSubjectsForClass(className, true);
-  const exams = await ensureExamRows();
+  const exams = await ensureExamRows(session);
 
   const examIdToCode = new Map(exams.map((exam) => [exam.id, exam.exam_code]));
   const examIds = exams.map((exam) => exam.id);
@@ -1078,17 +1074,21 @@ app.get('/result', async (req, res) => {
   const queryClass = canonicalizeClass(req.query.class || "");
   const roll = req.query.roll?.trim();
   const terminal = req.query.terminal?.trim().toLowerCase();
+  const session = req.query.session?.trim();
 
   if (!queryClass || !roll)
     return res.json({ error: "Class and Roll number are required." });
   if (!terminal)
     return res.json({ error: "Please select terminal." });
+  if (!session)
+    return res.json({ error: "Please select session." });
 
   try {
     const dbResult = await buildResultFromSupabase({
       className: queryClass,
       roll,
       terminal,
+      session,
     });
 
     if (dbResult.status === "found") {
@@ -1205,7 +1205,7 @@ const isResultAvailable = (termData, visibleSubjects) => {
   });
 };
 
-  // âœ… Total Calculation â€” exclude Drawing (count only numeric values)
+  // ✅ Total Calculation — exclude Drawing (count only numeric values)
   const calcTotal = (sheetData) => {
     if (!sheetData) return 0;
     return Object.keys(sheetData)
@@ -1228,10 +1228,10 @@ const isResultAvailable = (termData, visibleSubjects) => {
     annual: calcTotal(data.annual),
   };
 
-  // âœ… Total full marks calculation
+  // ✅ Total full marks calculation
   const totalFullMarks = isLowerClass ? 600 : visibleSubjects.length * 100;
 
-  // âœ… Percentage logic
+  // ✅ Percentage logic
   // For classes 1-8: obtained / numSubjects * 100 (where numSubjects = 8 typically)
   const isClass1To8 = /^CLASS[-\s]?[1-8]$/i.test(queryClass) || /^[1-8]$/i.test(queryClass);
   const numValidSubjects = visibleSubjects.length;
@@ -1253,7 +1253,7 @@ const isResultAvailable = (termData, visibleSubjects) => {
     percentages[term] = percentage;
   });
 
-  // âœ… Division
+  // ✅ Division
   const division = {};
   termKeys.forEach((k) => {
     const termData = data[k];
@@ -1390,7 +1390,7 @@ app.get('/provisional', async (req, res) => {
 
   if (!student) return res.json({ error: "Student not found." });
 
-  // ðŸ”¹ PC number logic
+  // 🔹 PC number logic
   // Check if Excel already has a PC number
   let existingPC = student["P_C NO"] || student["P C NO"] || student["PC NO"];
   if (!existingPC || existingPC.trim() === "") {
@@ -1456,7 +1456,7 @@ app.get('/provisional', async (req, res) => {
 
   const totalFullMarks = isLowerClass ? 600 : (validSubjects.length * 100 || 1);
   
-  // âœ… For class 1-8: obtained / numSubjects * 100
+  // ✅ For class 1-8: obtained / numSubjects * 100
   const isClass1To8 = /^CLASS[-\s]?[1-8]$/i.test(queryClass) || /^[1-8]$/i.test(queryClass);
   let percentageAnnual;
   
@@ -1523,10 +1523,21 @@ app.get("/provisional.html", isAdminLoggedIn, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "provisional.html"));
 });
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 // ----------------- Admin Credentials -----------------
-const adminFile = path.join(__dirname, "admin.json");
+const adminFile = process.env.ADMIN_FILE_PATH
+  ? path.resolve(process.env.ADMIN_FILE_PATH)
+  : path.join(__dirname, "admin.json");
+
+const ensureAdminStorage = () => {
+  const adminDir = path.dirname(adminFile);
+  if (!fs.existsSync(adminDir)) {
+    fs.mkdirSync(adminDir, { recursive: true });
+  }
+};
+
+ensureAdminStorage();
 
 // If admin.json does not exist, create it with default password
 if (!fs.existsSync(adminFile)) {
@@ -1557,7 +1568,7 @@ transporter.verify((err) => {
   if (err) {
     console.error("SMTP VERIFY FAILED:", err);
   } else {
-    console.log("SMTP READY âœ…");
+    console.log("SMTP READY ✅");
   }
 });
 
@@ -1645,6 +1656,33 @@ app.get(
     }
   }
 );
+
+    // Public endpoint: list distinct academic sessions (falls back to default when DB is not configured)
+    app.get('/api/sessions', async (req, res) => {
+      try {
+        if (isSupabaseEnabled()) {
+          const { data, error } = await supabase
+            .from('exams')
+            .select('academic_session')
+            .neq('academic_session', '')
+            .order('academic_session', { ascending: false });
+
+          if (error) throw error;
+
+          const sessions = Array.from(
+            new Set((data || []).map((r) => String(r.academic_session || '').trim()).filter(Boolean))
+          ).sort().reverse();
+
+          return res.json({ sessions });
+        }
+
+        // Supabase not configured — return default session
+        return res.json({ sessions: [DEFAULT_ACADEMIC_SESSION] });
+      } catch (err) {
+        console.error('Failed to fetch sessions:', err);
+        return res.status(500).json({ error: 'Failed to fetch sessions' });
+      }
+    });
 
 app.get(
   "/api/admin/students",
@@ -2016,33 +2054,18 @@ app.post("/admin/request-otp", async (req, res) => {
     const expires = Date.now() + 5 * 60 * 1000;
 
     otpStore[normalizedEmail] = { otp, expires };
-
-    // âœ… SEND OTP USING MAILJET API (NO SMTP)
-    await mailjet
-      .post("send", { version: "v3.1" })
-      .request({
-        Messages: [
-          {
-            From: {
-              Email: "t01auheed@gmail.com", // VERIFIED MAILJET EMAIL
-              Name: "Star Public School"
-            },
-            To: [
-              {
-                Email: normalizedEmail
-              }
-            ],
-            Subject: "Star Public School â€“ Admin Verification Code",
-            TextPart: `Your OTP is ${otp}. Valid for 5 minutes.`,
-            HTMLPart: `
-              <h3>Star Public School</h3>
-              <p>Your admin verification code is:</p>
-              <h1>${otp}</h1>
-              <p>This code is valid for 5 minutes.</p>
-            `
-          }
-        ]
-      });
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: normalizedEmail,
+      subject: "Star Public School - Admin Verification Code",
+      text: `Your OTP is ${otp}. Valid for 5 minutes.`,
+      html: `
+        <h3>Star Public School</h3>
+        <p>Your admin verification code is:</p>
+        <h1>${otp}</h1>
+        <p>This code is valid for 5 minutes.</p>
+      `
+    });
 
     console.log("OTP SENT:", otp); // debug
     res.json({ success: true, message: "OTP sent successfully" });
@@ -2084,4 +2107,8 @@ app.get("/admin/dashboard", isAdminLoggedIn, (req, res) => {
     res.redirect("/dashboard.html");
 });
 
-app.listen(PORT, () => console.log(`âœ… Server running at http://localhost:${PORT}`));
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+}
+
+module.exports = serverless(app);

@@ -8,6 +8,9 @@ const RESULTS_FILE =
   process.env.RESULTS_FILE || path.join(__dirname, "..", "results.xlsx");
 const ACADEMIC_SESSION = process.env.ACADEMIC_SESSION || "2025-26";
 const DRY_RUN = process.argv.includes("--dry-run");
+const MIGRATE_SHEET_NAME = process.env.MIGRATE_SHEET_NAME || "";
+const EXAM_CODE_OVERRIDE = process.env.EXAM_CODE || "";
+const EXAM_NAME_OVERRIDE = process.env.EXAM_NAME || "";
 
 const SHEET_EXAM_MAP = {
   result_1st: { examCode: "1st", examName: "First Terminal" },
@@ -15,6 +18,24 @@ const SHEET_EXAM_MAP = {
   result_3rd: { examCode: "3rd", examName: "Third Terminal" },
   result_annual: { examCode: "annual", examName: "Annual" },
 };
+// Optional comma-separated list of sheet names to process (e.g. "result_1st")
+const SHEET_FILTER = process.env.SHEET_FILTER ? new Set(process.env.SHEET_FILTER.split(",").map(s => s.trim())) : null;
+
+function deriveExamInfoFromName(sheetName) {
+  const lower = sheetName.toLowerCase();
+  if (EXAM_CODE_OVERRIDE && EXAM_NAME_OVERRIDE) {
+    return { examCode: EXAM_CODE_OVERRIDE, examName: EXAM_NAME_OVERRIDE };
+  }
+  if (EXAM_CODE_OVERRIDE) {
+    const examName = EXAM_NAME_OVERRIDE || (EXAM_CODE_OVERRIDE === "annual" ? "Annual" : "First Terminal");
+    return { examCode: EXAM_CODE_OVERRIDE, examName };
+  }
+  if (/1st|first/.test(lower)) return { examCode: "1st", examName: "First Terminal" };
+  if (/2nd|second/.test(lower)) return { examCode: "2nd", examName: "Second Terminal" };
+  if (/3rd|third/.test(lower)) return { examCode: "3rd", examName: "Third Terminal" };
+  if (/annual/.test(lower)) return { examCode: "annual", examName: "Annual" };
+  return { examCode: "1st", examName: "First Terminal" };
+}
 
 const CLASS_ALIAS_MAP = {
   NURA: "NURSERY-A",
@@ -241,7 +262,34 @@ async function main() {
   const marksByKey = new Map();
   const provisionalByStudentKey = new Map();
 
-  for (const [sheetName, examInfo] of Object.entries(SHEET_EXAM_MAP)) {
+  let sheetEntries = Object.entries(SHEET_EXAM_MAP).filter(([sheetName]) => {
+    if (MIGRATE_SHEET_NAME) return sheetName === MIGRATE_SHEET_NAME;
+    if (!SHEET_FILTER) return true;
+    return SHEET_FILTER.has(sheetName);
+  });
+
+  if (MIGRATE_SHEET_NAME && sheetEntries.length === 0) {
+    const worksheet = workbook.getWorksheet(MIGRATE_SHEET_NAME);
+    if (!worksheet) {
+      throw new Error(`Worksheet not found: ${MIGRATE_SHEET_NAME}`);
+    }
+    sheetEntries = [[MIGRATE_SHEET_NAME, deriveExamInfoFromName(MIGRATE_SHEET_NAME)]];
+  }
+
+  if (sheetEntries.length === 0) {
+    const worksheet = workbook.worksheets[0];
+    if (worksheet) {
+      const examInfo = deriveExamInfoFromName(worksheet.name);
+      console.log(`No known sheet mapping found; migrating first worksheet: ${worksheet.name}`);
+      sheetEntries = [[worksheet.name, examInfo]];
+    }
+  }
+
+  if (sheetEntries.length === 0) {
+    throw new Error('No worksheet found to migrate.');
+  }
+
+  for (const [sheetName, examInfo] of sheetEntries) {
     const worksheet = workbook.getWorksheet(sheetName);
     if (!worksheet) {
       console.warn(`Sheet not found: ${sheetName}. Skipping.`);
@@ -340,7 +388,8 @@ async function main() {
 
   const supabase = createSupabaseClient();
 
-  const examRows = Object.values(SHEET_EXAM_MAP).map((exam) => ({
+  const processedExamInfos = sheetEntries.map(([, examInfo]) => examInfo);
+  const examRows = processedExamInfos.map((exam) => ({
     exam_code: exam.examCode,
     exam_name: exam.examName,
     academic_session: ACADEMIC_SESSION,
@@ -386,9 +435,9 @@ async function main() {
       supabase.from("classes").select("id,class_name,class_code"),
       supabase.from("subjects").select("id,subject_code"),
       supabase.from("exams").select("id,exam_code").in(
-        "exam_code",
-        Object.values(SHEET_EXAM_MAP).map((x) => x.examCode)
-      ),
+          "exam_code",
+          processedExamInfos.map((x) => x.examCode)
+        ),
     ]);
 
   if (classRowsError) throw classRowsError;

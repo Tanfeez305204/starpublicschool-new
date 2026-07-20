@@ -24,4 +24,19 @@ Thumbs.db
 
 # Local generated artifacts
 results.updated_drawing_grades.xlsx
+db-backup.xlsx
 ~$*.xlsx
+*.tmp*.js
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# Build / output
+dist/
+build/
+coverage/
+.cache/

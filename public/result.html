@@ -866,17 +866,36 @@ footer {
   <main class="result-main">
   <section class="result-section" id="result">
     <h2>Check Your Result</h2>
-    <p class="sub">Enter your term, class and roll number to view and download your result.</p>
+    <p class="sub">Select your term, class and roll number to view and download your result.</p>
     <form id="resultForm">
        <select id="terminal" required>
-    <option value="">Select Term</option>
-    <option value="1st">1st Term</option>
-    <option value="2nd">2nd Term</option>
-   <option value="3rd">3rd Term</option>
-   <option value="annual">Annual</option>
-  
-  </select>
-      <input type="text" id="class" placeholder="Enter Class" required />
+        <option value="">Select Term</option>
+        <option value="1st">1st Term</option>
+        <option value="2nd">2nd Term</option>
+        <option value="3rd">3rd Term</option>
+        <option value="annual">Annual</option>
+      </select>
+      <select id="session" required>
+        <option value="">Select Session</option>
+      </select>
+      <select id="class" required>
+        <option value="">Select Class</option>
+        <option value="NURSERY-A">Nursery-A</option>
+        <option value="NURSERY-B">Nursery-B</option>
+        <option value="NURSERY-C">Nursery-C</option>
+        <option value="L.K.G-A">L.K.G-A</option>
+        <option value="L.K.G-B">L.K.G-B</option>
+        <option value="U.K.G-A">U.K.G-A</option>
+        <option value="U.K.G-B">U.K.G-B</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+      </select>
       <input type="text" id="roll" placeholder="Enter Roll No" required />
       <button class="btn primary" type="submit">Get Result</button>
     </form>
@@ -970,16 +989,51 @@ footer {
   <!-- Fetch Result & Render -->
   <!-- ---------------------------------------------------------- -->
 <script>
+  // Populate session dropdown from backend (with fallback)
+  async function loadSessions() {
+    const sel = document.getElementById('session');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Select Session</option>';
+
+    const fallback = ["2026-27", "2025-26"];
+    try {
+      const res = await fetch('/api/sessions', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Network');
+      const json = await res.json();
+      const sessions = Array.isArray(json.sessions) && json.sessions.length ? json.sessions : fallback;
+      sessions
+        .slice()
+        .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }))
+        .reverse()
+        .forEach((s) => {
+          const opt = document.createElement('option');
+          opt.value = s;
+          opt.textContent = s;
+          sel.appendChild(opt);
+        });
+    } catch (err) {
+      fallback.forEach((s) => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        sel.appendChild(opt);
+      });
+    }
+  }
+  window.addEventListener('DOMContentLoaded', loadSessions);
+
   document.getElementById("resultForm").addEventListener("submit", async function (e) {
     e.preventDefault();
     const studentClass = document.getElementById("class").value.trim();
     const roll = document.getElementById("roll").value.trim();
     const terminal = document.getElementById("terminal").value;
+    const session = document.getElementById("session").value;
 
     if (!studentClass || !roll || !terminal) return;
 
     try {
-      const res = await fetch(`/result?class=${encodeURIComponent(studentClass)}&roll=${encodeURIComponent(roll)}&terminal=${encodeURIComponent(terminal)}`);
+      const url = `/result?class=${encodeURIComponent(studentClass)}&roll=${encodeURIComponent(roll)}&terminal=${encodeURIComponent(terminal)}${session ? `&session=${encodeURIComponent(session)}` : ''}`;
+      const res = await fetch(url);
       const data = await res.json();
       const display = document.getElementById("resultDisplay");
 
