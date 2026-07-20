@@ -268,10 +268,21 @@ body {
     }
 
     .stamp {
-      width: 120px;
-      opacity: 0.5;
-      margin-bottom: -50px;
-    }
+  width: 130px;
+  opacity: 1;
+
+  /* Deep blue ko preserve karega */
+  filter:
+    contrast(180%)
+    saturate(220%)
+    brightness(0.9);
+
+  mix-blend-mode: multiply;
+
+  margin-bottom: -50px;
+  position: relative;
+  z-index: 3;
+}
 
     .sign {
       width: 80px;
@@ -1219,9 +1230,9 @@ footer {
 </div>
 
           <div class="sign-stamp-wrapper">
-            <img src="content/stamp.jpeg" class="stamp" alt="School Stamp" />
+            <img src="content/stamp.jpg" class="stamp" alt="School Seal" />
             <img src="content/sign.jpeg" class="sign" alt="Principal's Signature" />
-            <p class="sign-text">Principal's Signature & Stamp</p>
+            <p class="sign-text">Principal's Signature & Seal</p>
           </div>
         </div>`;
 
